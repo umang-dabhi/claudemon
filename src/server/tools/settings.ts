@@ -1,6 +1,6 @@
 /**
  * buddy_settings tool — Configure Claudemon settings.
- * Currently supports: encounter-speed (fast | normal | slow).
+ * Supports: encounter-speed, xp-share.
  */
 
 import { z } from "zod";
@@ -11,7 +11,6 @@ import { ENCOUNTER_THRESHOLDS } from "../../engine/constants.js";
 
 const VALID_ENCOUNTER_SPEEDS: readonly EncounterSpeed[] = ["fast", "normal", "slow"];
 
-/** Speed descriptions for user-facing messages. */
 const SPEED_DESCRIPTIONS: Readonly<Record<EncounterSpeed, string>> = {
   fast: "Fastest encounters — wild Pokemon appear every ~100 XP",
   normal: "Default pace — wild Pokemon appear every ~250 XP",
@@ -22,12 +21,12 @@ const SPEED_DESCRIPTIONS: Readonly<Record<EncounterSpeed, string>> = {
 export function registerSettingsTool(server: McpServer): void {
   server.tool(
     "buddy_settings",
-    "Configure Claudemon settings (encounter speed, etc.)",
+    "Configure Claudemon settings (encounter-speed, xp-share)",
     {
-      setting: z.enum(["encounter-speed"]).describe("The setting to configure"),
-      value: z.string().describe("The value to set (for encounter-speed: fast, normal, or slow)"),
+      setting: z.enum(["encounter-speed", "xp-share"]).describe("The setting to configure"),
+      value: z.string().describe("The value to set"),
     },
-    async (params: { setting: "encounter-speed"; value: string }) => {
+    async (params: { setting: "encounter-speed" | "xp-share"; value: string }) => {
       const stateManager = StateManager.getInstance();
       const state = await stateManager.load();
 
@@ -42,6 +41,7 @@ export function registerSettingsTool(server: McpServer): void {
         };
       }
 
+      // ── Encounter Speed ──────────────────────────────────
       if (params.setting === "encounter-speed") {
         const speed = params.value.toLowerCase();
 
@@ -68,7 +68,6 @@ export function registerSettingsTool(server: McpServer): void {
         const validSpeed = speed as EncounterSpeed;
         const previousSpeed = state.config.encounterSpeed ?? "normal";
         state.config.encounterSpeed = validSpeed;
-
         await stateManager.save();
 
         return {
@@ -76,7 +75,7 @@ export function registerSettingsTool(server: McpServer): void {
             {
               type: "text" as const,
               text: [
-                `Encounter speed updated: ${previousSpeed} -> ${validSpeed}`,
+                `Encounter speed: ${previousSpeed} → ${validSpeed}`,
                 "",
                 SPEED_DESCRIPTIONS[validSpeed],
                 `XP threshold: ${ENCOUNTER_THRESHOLDS[validSpeed]}`,
@@ -86,12 +85,54 @@ export function registerSettingsTool(server: McpServer): void {
         };
       }
 
-      // Unreachable with the current enum, but guards against future additions
+      // ── XP Share ─────────────────────────────────────────
+      if (params.setting === "xp-share") {
+        const percent = parseInt(params.value, 10);
+
+        if (isNaN(percent) || percent < 0 || percent > 100) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: [
+                  `Invalid XP share value: "${params.value}"`,
+                  "",
+                  "Enter a number 0-100 (percentage of XP shared to inactive party):",
+                  "  0   — No XP sharing (only active Pokemon earns)",
+                  "  25  — Default (inactive get 25% of earned XP)",
+                  "  50  — Half XP shared to inactive party",
+                  "  100 — Full XP to everyone",
+                ].join("\n"),
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const previous = state.config.xpSharePercent ?? 25;
+        state.config.xpSharePercent = percent;
+        await stateManager.save();
+
+        const desc =
+          percent === 0
+            ? "Disabled — only active Pokemon earns XP"
+            : `Inactive party members receive ${percent}% of earned XP`;
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: [`XP share: ${previous}% → ${percent}%`, "", desc].join("\n"),
+            },
+          ],
+        };
+      }
+
       return {
         content: [
           {
             type: "text" as const,
-            text: `Unknown setting: "${params.setting}". Available settings: encounter-speed`,
+            text: `Unknown setting: "${params.setting}". Available: encounter-speed, xp-share`,
           },
         ],
         isError: true,

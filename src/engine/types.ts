@@ -254,6 +254,7 @@ export interface BuddyConfig {
   statusLineEnabled: boolean;
   bellEnabled: boolean; // Terminal bell on level-up/encounters
   encounterSpeed: "fast" | "normal" | "slow"; // Configurable encounter frequency
+  xpSharePercent: number; // 0-100, default 25. Percentage of XP shared to inactive party
 }
 
 // ── XP Events (what triggers XP awards) ────────────────────

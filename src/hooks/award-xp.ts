@@ -64,6 +64,21 @@ if (xpEvent.statBoost && xpEvent.boostAmount > 0) {
   applyStatBoost(pokemon, xpEvent.statBoost, xpEvent.boostAmount);
 }
 
+// XP sharing: give inactive party members a percentage
+const sharePercent = state.config.xpSharePercent ?? 0;
+if (sharePercent > 0 && state.party.length > 1) {
+  const sharedXp = Math.floor((xpEvent.xp * sharePercent) / 100);
+  if (sharedXp > 0) {
+    for (const member of state.party) {
+      if (member.isActive) continue;
+      const memberSpecies = POKEMON_BY_ID.get(member.pokemonId);
+      if (memberSpecies) {
+        addXp(member, sharedXp, memberSpecies);
+      }
+    }
+  }
+}
+
 // Track total XP earned by the trainer
 state.totalXpEarned += xpEvent.xp;
 

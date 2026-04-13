@@ -6,7 +6,7 @@
  */
 
 import { access, stat, unlink, readdir, readFile } from "node:fs/promises";
-import { constants as fsConstants } from "node:fs";
+import { constants as fsConstants, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -32,7 +32,20 @@ const LOCK_MAX_AGE_MS = 5000;
 const EXPECTED_SPRITE_COUNT = 151;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const COLORSCRIPT_DIR = resolve(dirname(__dirname), "sprites/colorscripts/small");
+// Sprite dir: check multiple candidate paths (works from source, dist, and npm global)
+function findColorscriptDir(): string | null {
+  const candidates = [
+    resolve(dirname(__dirname), "sprites", "colorscripts", "small"),
+    resolve(dirname(__dirname), "..", "sprites", "colorscripts", "small"),
+    resolve(__dirname, "..", "sprites", "colorscripts", "small"),
+    resolve(__dirname, "..", "..", "sprites", "colorscripts", "small"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return null;
+}
+const COLORSCRIPT_DIR = findColorscriptDir();
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -236,6 +249,9 @@ async function checkStaleLock(): Promise<CheckResult> {
 
 async function checkSpriteCount(): Promise<CheckResult> {
   try {
+    if (!COLORSCRIPT_DIR) {
+      return { label: "Sprites", passed: false, detail: "colorscripts directory not found" };
+    }
     await access(COLORSCRIPT_DIR, fsConstants.F_OK);
     const entries = await readdir(COLORSCRIPT_DIR);
     const spriteFiles = entries.filter((f) => f.endsWith(".txt"));

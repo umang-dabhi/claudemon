@@ -56,6 +56,7 @@ This ensures first-time users get the starter selection flow automatically.
 | `settings encounter-speed fast` | `buddy_settings` with setting="encounter-speed", value="fast" — fastest encounters (100 XP) |
 | `settings encounter-speed normal` | `buddy_settings` with setting="encounter-speed", value="normal" — default (250 XP) |
 | `settings encounter-speed slow` | `buddy_settings` with setting="encounter-speed", value="slow" — less interruptions (500 XP) |
+| `settings xp-share N` | `buddy_settings` with setting="xp-share", value="N" — share N% XP to inactive party (0-100) |
 | `help` | List all available /buddy commands |
 
 Pass $ARGUMENTS to determine which subcommand to route to.

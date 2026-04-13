@@ -134,6 +134,7 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
       statusLineEnabled: true,
       bellEnabled: true,
       encounterSpeed: "normal" as const,
+      xpSharePercent: 25,
     },
     startedAt: new Date().toISOString(),
     totalXpEarned: 0,
