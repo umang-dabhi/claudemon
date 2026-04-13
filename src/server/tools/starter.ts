@@ -65,10 +65,29 @@ async function getStarters(): Promise<number[]> {
     // No saved options or expired — generate new ones
   }
 
-  // Generate fresh random 3
+  // Generate fresh random 3 with different primary types
   const seed = hashString(`claudemon-${Date.now()}-${Math.random()}`);
   const shuffled = seededShuffle(STARTER_POOL, seed);
-  const starters = [shuffled[0]!, shuffled[1]!, shuffled[2]!];
+  const starters: number[] = [];
+  const usedTypes = new Set<string>();
+
+  for (const id of shuffled) {
+    if (starters.length >= 3) break;
+    const pokemon = POKEMON_BY_ID.get(id);
+    if (!pokemon) continue;
+    const primaryType = pokemon.types[0];
+    if (usedTypes.has(primaryType)) continue;
+    usedTypes.add(primaryType);
+    starters.push(id);
+  }
+
+  // Fallback if not enough unique types (shouldn't happen with 39 starters)
+  if (starters.length < 3) {
+    for (const id of shuffled) {
+      if (starters.length >= 3) break;
+      if (!starters.includes(id)) starters.push(id);
+    }
+  }
 
   // Save for consistency until they pick
   try {

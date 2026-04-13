@@ -24,21 +24,30 @@ fill your Pokedex -- all while you code.
 
 ## Install
 
+**Recommended (global install — persistent):**
+```bash
+npm install -g @umang-boss/claudemon
+claudemon install
+```
+
+**Or quick try (npx — may need reinstall after cache clear):**
 ```bash
 npx @umang-boss/claudemon install
 ```
 
-That's it! Start a new Claude Code session and type `/buddy`.
+Start a new Claude Code session and type `/buddy` to begin!
 
 **Requirements:** Node.js 18+ (Bun optional, auto-detected for faster startup)
 
 ### Other CLI Commands
 
 ```bash
-npx @umang-boss/claudemon doctor     # Check installation health
-npx @umang-boss/claudemon update     # Re-register after updates
-npx @umang-boss/claudemon uninstall  # Remove (preserves save data)
+claudemon doctor     # Check installation health
+claudemon update     # Re-register after updates
+claudemon uninstall  # Remove (preserves save data)
 ```
+
+> **Note:** `npm install -g` is recommended over `npx` because the MCP server path needs to persist. With `npx`, the path points to a temporary cache that may be cleaned up.
 
 ## Commands
 

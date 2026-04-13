@@ -1,6 +1,6 @@
 {
   "name": "@umang-boss/claudemon",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Pokemon coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
   "main": "dist/src/server/index.js",
@@ -33,8 +33,7 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\" \"cli/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\" --ignore-unknown",
-    "format:check": "prettier --check \"src/**/*.ts\" \"cli/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\" --ignore-unknown",
-    "prepare": "husky"
+    "format:check": "prettier --check \"src/**/*.ts\" \"cli/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\" --ignore-unknown"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
