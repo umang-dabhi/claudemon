@@ -4,6 +4,8 @@
  */
 
 import { z } from "zod";
+import { readFile, stat, access as fsAccess, writeFile, mkdir, unlink } from "node:fs/promises";
+import { constants as fsConst } from "node:fs";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { OwnedPokemon, CodingStats } from "../../engine/types.js";
 import { POKEMON_BY_ID } from "../../engine/pokemon-data.js";
@@ -47,9 +49,7 @@ async function getStarters(): Promise<number[]> {
 
   // Try to load previously generated options (valid for 24 hours)
   try {
-    const { readFile, stat, access: fsAccess } = await import("node:fs/promises");
-    const { constants } = await import("node:fs");
-    await fsAccess(optionsPath, constants.F_OK);
+    await fsAccess(optionsPath, fsConst.F_OK);
     const fileStat = await stat(optionsPath);
     const ageMs = Date.now() - fileStat.mtimeMs;
     const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -91,7 +91,6 @@ async function getStarters(): Promise<number[]> {
 
   // Save for consistency until they pick
   try {
-    const { writeFile, mkdir } = await import("node:fs/promises");
     await mkdir(`${process.env["HOME"] ?? "~"}/.claudemon`, { recursive: true });
     await writeFile(optionsPath, JSON.stringify(starters), "utf-8");
   } catch {
@@ -104,7 +103,6 @@ async function getStarters(): Promise<number[]> {
 /** Clear saved starter options (called after picking) */
 async function clearStarterOptions(): Promise<void> {
   try {
-    const { unlink } = await import("node:fs/promises");
     await unlink(getStarterOptionsPath());
   } catch {
     // Ignore

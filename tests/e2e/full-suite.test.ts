@@ -88,70 +88,7 @@ import { POKEMON_TYPES, CODING_STATS } from "../../src/engine/types.js";
 
 // ── Test Helpers ───────────────────────────────────────────
 
-function emptyCounters(): EventCounters {
-  const c = {} as Record<string, number>;
-  for (const key of EVENT_COUNTER_KEYS) {
-    c[key] = 0;
-  }
-  return c as EventCounters;
-}
-
-function makeOwned(overrides: Partial<OwnedPokemon> = {}): OwnedPokemon {
-  const pokemon = POKEMON_BY_ID.get(overrides.pokemonId ?? 4)!;
-  return {
-    id: "test-" + Math.random().toString(36).slice(2),
-    pokemonId: pokemon.id,
-    nickname: null,
-    level: STARTER_LEVEL,
-    currentXp: 0,
-    totalXp: 0,
-    codingStats: initCodingStats(pokemon.baseStats),
-    happiness: 70,
-    caughtAt: new Date().toISOString(),
-    evolvedAt: null,
-    isActive: true,
-    personality: null,
-    shiny: false,
-    isStarter: true,
-    ...overrides,
-  };
-}
-
-function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
-  return {
-    trainerId: "test-trainer",
-    trainerName: "Tester",
-    party: [makeOwned()],
-    pcBox: [],
-    pokedex: { entries: {}, totalSeen: 0, totalCaught: 0 },
-    badges: [],
-    achievements: [],
-    counters: emptyCounters(),
-    streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: {
-      muted: false,
-      reactionCooldownMs: 30000,
-      statusLineEnabled: true,
-      bellEnabled: true,
-      encounterSpeed: "normal" as const,
-      xpSharePercent: 25,
-    },
-    startedAt: new Date().toISOString(),
-    totalXpEarned: 0,
-    totalSessions: 0,
-    pendingEncounter: null,
-    xpSinceLastEncounter: 0,
-    recentToolTypes: [],
-    lastEncounterTime: 0,
-    mood: "neutral" as const,
-    moodSetAt: 0,
-    lastFedAt: 0,
-    lastTrainedAt: 0,
-    lastPlayedAt: 0,
-    pendingQuiz: null,
-    ...overrides,
-  };
-}
+import { emptyCounters, makeOwned, makeState } from "../helpers/make-state.js";
 
 // ════════════════════════════════════════════════════════════
 // PHASE 1: Foundation

@@ -5,7 +5,8 @@
 
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import { existsSync, constants as fsConstants } from "node:fs";
+import { readFile, writeFile, access as fsAccess } from "node:fs/promises";
 
 // ── Config shape interfaces ──────────────────────────────────
 
@@ -109,10 +110,8 @@ export function info(msg: string): void {
 }
 
 export async function readJson<T>(path: string): Promise<T | null> {
-  const { readFile, access } = await import("node:fs/promises");
-  const { constants } = await import("node:fs");
   try {
-    await access(path, constants.F_OK);
+    await fsAccess(path, fsConstants.F_OK);
     const text = await readFile(path, "utf-8");
     return JSON.parse(text) as T;
   } catch {
@@ -121,6 +120,5 @@ export async function readJson<T>(path: string): Promise<T | null> {
 }
 
 export async function writeJson(path: string, data: unknown): Promise<void> {
-  const { writeFile } = await import("node:fs/promises");
   await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }

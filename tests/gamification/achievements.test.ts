@@ -10,86 +10,8 @@ import {
   checkNewAchievements,
   unlockAchievement,
 } from "../../src/gamification/achievements.js";
-import type {
-  AchievementCondition,
-  PlayerState,
-  OwnedPokemon,
-  UnlockedAchievement,
-} from "../../src/engine/types.js";
-
-// ── Helpers ──────────────────────────────────────────────────
-
-function makeOwned(overrides: Partial<OwnedPokemon> = {}): OwnedPokemon {
-  return {
-    id: "test-uuid",
-    pokemonId: 4,
-    nickname: null,
-    level: 5,
-    currentXp: 0,
-    totalXp: 0,
-    codingStats: { stamina: 19, debugging: 26, stability: 21, velocity: 32, wisdom: 25 },
-    happiness: 70,
-    caughtAt: "2026-04-13T00:00:00.000Z",
-    evolvedAt: null,
-    isActive: true,
-    personality: null,
-    shiny: false,
-    isStarter: true,
-    ...overrides,
-  };
-}
-
-function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
-  return {
-    trainerId: "test-trainer",
-    trainerName: "Ash",
-    party: [],
-    pcBox: [],
-    pokedex: { entries: {}, totalSeen: 0, totalCaught: 0 },
-    badges: [],
-    achievements: [],
-    counters: {
-      commits: 0,
-      tests_passed: 0,
-      tests_failed: 0,
-      tests_written: 0,
-      builds_succeeded: 0,
-      builds_failed: 0,
-      bugs_fixed: 0,
-      lint_fixes: 0,
-      files_created: 0,
-      files_edited: 0,
-      searches: 0,
-      large_refactors: 0,
-      errors_encountered: 0,
-      sessions: 0,
-      prs_merged: 0,
-    },
-    streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: {
-      muted: false,
-      reactionCooldownMs: 30000,
-      statusLineEnabled: true,
-      bellEnabled: true,
-      encounterSpeed: "normal" as const,
-      xpSharePercent: 25,
-    },
-    startedAt: "2026-04-13T00:00:00.000Z",
-    totalXpEarned: 0,
-    totalSessions: 0,
-    pendingEncounter: null,
-    xpSinceLastEncounter: 0,
-    recentToolTypes: [],
-    lastEncounterTime: 0,
-    mood: "neutral" as const,
-    moodSetAt: 0,
-    lastFedAt: 0,
-    lastTrainedAt: 0,
-    lastPlayedAt: 0,
-    pendingQuiz: null,
-    ...overrides,
-  };
-}
+import type { AchievementCondition, UnlockedAchievement } from "../../src/engine/types.js";
+import { makeOwned, makeState } from "../helpers/make-state.js";
 
 // ── isConditionMet Tests ─────────────────────────────────────
 
@@ -396,7 +318,7 @@ describe("checkNewAchievements", () => {
   });
 
   test("returns empty array when no conditions are met", () => {
-    const state = makeState();
+    const state = makeState({ party: [] });
     const newAchievements = checkNewAchievements(state);
 
     expect(newAchievements).toEqual([]);

@@ -11,29 +11,8 @@ import {
   renderStatBar,
   getTrainerTitle,
 } from "../../src/engine/stats.js";
-import type { BaseStats, OwnedPokemon, CodingStats } from "../../src/engine/types.js";
-
-// ── Helpers ──────────────────────────────────────────────────
-
-function makeOwned(overrides: Partial<OwnedPokemon> = {}): OwnedPokemon {
-  return {
-    id: "test-uuid",
-    pokemonId: 4,
-    nickname: null,
-    level: 5,
-    currentXp: 0,
-    totalXp: 0,
-    codingStats: { stamina: 19, debugging: 26, stability: 21, velocity: 32, wisdom: 25 },
-    happiness: 70,
-    caughtAt: "2026-04-13T00:00:00.000Z",
-    evolvedAt: null,
-    isActive: true,
-    personality: null,
-    shiny: false,
-    isStarter: true,
-    ...overrides,
-  };
-}
+import type { BaseStats, CodingStats } from "../../src/engine/types.js";
+import { makeOwned } from "../helpers/make-state.js";
 
 // ── initCodingStats Tests ────────────────────────────────────
 
@@ -199,38 +178,38 @@ describe("renderStatBar", () => {
     const bar = renderStatBar(100, 10);
     expect(bar.length).toBe(10);
     // All filled blocks
-    expect(bar).toBe("\u2588".repeat(10));
+    expect(bar).toBe("#".repeat(10));
   });
 
   test("renders empty bar at value 0", () => {
     const bar = renderStatBar(0, 10);
     expect(bar.length).toBe(10);
     // All empty blocks
-    expect(bar).toBe("\u2591".repeat(10));
+    expect(bar).toBe("-".repeat(10));
   });
 
   test("renders half bar at value 50", () => {
     const bar = renderStatBar(50, 10);
     expect(bar.length).toBe(10);
-    expect(bar).toBe("\u2588".repeat(5) + "\u2591".repeat(5));
+    expect(bar).toBe("#".repeat(5) + "-".repeat(5));
   });
 
   test("clamps values above 100", () => {
     const bar = renderStatBar(150, 10);
     expect(bar.length).toBe(10);
-    expect(bar).toBe("\u2588".repeat(10));
+    expect(bar).toBe("#".repeat(10));
   });
 
   test("clamps values below 0", () => {
     const bar = renderStatBar(-10, 10);
     expect(bar.length).toBe(10);
-    expect(bar).toBe("\u2591".repeat(10));
+    expect(bar).toBe("-".repeat(10));
   });
 
   test("respects custom maxWidth", () => {
     const bar = renderStatBar(100, 20);
     expect(bar.length).toBe(20);
-    expect(bar).toBe("\u2588".repeat(20));
+    expect(bar).toBe("#".repeat(20));
   });
 
   test("uses default maxWidth of 10", () => {
@@ -241,7 +220,7 @@ describe("renderStatBar", () => {
   test("correctly rounds partial blocks", () => {
     // 30% of 10 = 3
     const bar = renderStatBar(30, 10);
-    expect(bar).toBe("\u2588".repeat(3) + "\u2591".repeat(7));
+    expect(bar).toBe("#".repeat(3) + "-".repeat(7));
   });
 });
 

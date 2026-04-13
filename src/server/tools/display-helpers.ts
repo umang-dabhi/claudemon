@@ -19,11 +19,11 @@ export function pad(str: string, width: number): string {
   return str + " ".repeat(width - str.length);
 }
 
-/** Render a compact XP progress bar using Unicode block characters. */
+/** Render a compact XP progress bar using ASCII characters for MCP compatibility. */
 export function renderXpBar(percent: number, width: number = 20): string {
   const filled = Math.round((percent / 100) * width);
   const empty = width - filled;
-  return "\u2588".repeat(filled) + "\u2591".repeat(empty);
+  return "#".repeat(filled) + "-".repeat(empty);
 }
 
 /**

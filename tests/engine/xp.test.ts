@@ -12,31 +12,9 @@ import {
   createXpEvent,
 } from "../../src/engine/xp.js";
 import { POKEMON_BY_ID } from "../../src/engine/pokemon-data.js";
-import type { OwnedPokemon, Pokemon, XpEventType } from "../../src/engine/types.js";
+import type { Pokemon, XpEventType } from "../../src/engine/types.js";
 import { XP_AWARDS } from "../../src/engine/constants.js";
-
-// ── Helpers ──────────────────────────────────────────────────
-
-/** Create a minimal OwnedPokemon for testing. */
-function makeOwned(overrides: Partial<OwnedPokemon> = {}): OwnedPokemon {
-  return {
-    id: "test-uuid",
-    pokemonId: 4, // Charmander
-    nickname: null,
-    level: 5,
-    currentXp: 0,
-    totalXp: 0,
-    codingStats: { stamina: 19, debugging: 26, stability: 21, velocity: 32, wisdom: 25 },
-    happiness: 70,
-    caughtAt: "2026-04-13T00:00:00.000Z",
-    evolvedAt: null,
-    isActive: true,
-    personality: null,
-    shiny: false,
-    isStarter: true,
-    ...overrides,
-  };
-}
+import { makeOwned } from "../helpers/make-state.js";
 
 // ── Gen 1 XP Formula Tests ───────────────────────────────────
 

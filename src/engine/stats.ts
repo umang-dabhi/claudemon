@@ -7,11 +7,11 @@ import type { BaseStats, CodingStats, CodingStat, OwnedPokemon } from "./types.j
 import { BASE_STAT_TO_CODING } from "./types.js";
 import { TRAINER_TITLES } from "./constants.js";
 
-/** Full block for filled portion of stat bar */
-const BLOCK_FILLED = "\u2588";
+/** Filled portion of stat bar (ASCII-safe for MCP text output) */
+const BLOCK_FILLED = "#";
 
-/** Light shade block for empty portion of stat bar */
-const BLOCK_EMPTY = "\u2591";
+/** Empty portion of stat bar (ASCII-safe for MCP text output) */
+const BLOCK_EMPTY = "-";
 
 /**
  * Create initial coding stats from a pokemon's base stats.
@@ -64,10 +64,11 @@ export function applyStatBoost(pokemon: OwnedPokemon, stat: CodingStat, amount: 
 }
 
 /**
- * Render a Unicode progress bar for a stat value.
+ * Render an ASCII progress bar for a stat value.
+ * Uses '#' and '-' for MCP text output compatibility.
  * @param value - Stat value (0-100 range)
  * @param maxWidth - Character width of the bar (default 10)
- * @returns Unicode bar string like "████████░░"
+ * @returns ASCII bar string like "######----"
  */
 export function renderStatBar(value: number, maxWidth: number = 10): string {
   const clamped = Math.max(0, Math.min(100, value));
