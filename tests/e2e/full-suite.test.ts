@@ -128,12 +128,20 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
     achievements: [],
     counters: emptyCounters(),
     streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: { muted: false, reactionCooldownMs: 30000, statusLineEnabled: true, bellEnabled: true },
+    config: {
+      muted: false,
+      reactionCooldownMs: 30000,
+      statusLineEnabled: true,
+      bellEnabled: true,
+      encounterSpeed: "normal" as const,
+    },
     startedAt: new Date().toISOString(),
     totalXpEarned: 0,
     totalSessions: 0,
     pendingEncounter: null,
     xpSinceLastEncounter: 0,
+    recentToolTypes: [],
+    lastEncounterTime: 0,
     ...overrides,
   };
 }
@@ -472,14 +480,46 @@ describe("Phase 3: Gamification & Journey", () => {
   // ── Encounter System ─────────────────────────────────────
 
   describe("Encounter System", () => {
-    test("shouldTriggerEncounter at 500+ XP", () => {
-      expect(shouldTriggerEncounter(500)).toBe(true);
-      expect(shouldTriggerEncounter(1000)).toBe(true);
+    test("shouldTriggerEncounter at normal threshold (250+ XP)", () => {
+      expect(
+        shouldTriggerEncounter({
+          xpSinceLastEncounter: 250,
+          encounterSpeed: "normal",
+          currentStreak: 0,
+          recentToolTypes: [],
+          currentHour: 12,
+        }),
+      ).toBe(true);
+      expect(
+        shouldTriggerEncounter({
+          xpSinceLastEncounter: 1000,
+          encounterSpeed: "normal",
+          currentStreak: 0,
+          recentToolTypes: [],
+          currentHour: 12,
+        }),
+      ).toBe(true);
     });
 
-    test("shouldTriggerEncounter false below 500", () => {
-      expect(shouldTriggerEncounter(0)).toBe(false);
-      expect(shouldTriggerEncounter(499)).toBe(false);
+    test("shouldTriggerEncounter false below normal threshold", () => {
+      expect(
+        shouldTriggerEncounter({
+          xpSinceLastEncounter: 0,
+          encounterSpeed: "normal",
+          currentStreak: 0,
+          recentToolTypes: [],
+          currentHour: 12,
+        }),
+      ).toBe(false);
+      expect(
+        shouldTriggerEncounter({
+          xpSinceLastEncounter: 249,
+          encounterSpeed: "normal",
+          currentStreak: 0,
+          recentToolTypes: [],
+          currentHour: 12,
+        }),
+      ).toBe(false);
     });
 
     test("getEncounterTypes returns valid types for all events", () => {

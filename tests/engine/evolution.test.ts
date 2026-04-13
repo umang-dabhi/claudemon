@@ -66,12 +66,20 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
       prs_merged: 0,
     },
     streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: { muted: false, reactionCooldownMs: 30000, statusLineEnabled: true, bellEnabled: true },
+    config: {
+      muted: false,
+      reactionCooldownMs: 30000,
+      statusLineEnabled: true,
+      bellEnabled: true,
+      encounterSpeed: "normal" as const,
+    },
     startedAt: "2026-04-13T00:00:00.000Z",
     totalXpEarned: 0,
     totalSessions: 0,
     pendingEncounter: null,
     xpSinceLastEncounter: 0,
+    recentToolTypes: [],
+    lastEncounterTime: 0,
     ...overrides,
   };
 }

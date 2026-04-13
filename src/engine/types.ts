@@ -159,6 +159,8 @@ export interface PlayerState {
   totalSessions: number;
   pendingEncounter: WildEncounter | null;
   xpSinceLastEncounter: number;
+  recentToolTypes: string[]; // Track tool diversity for bonus encounters
+  lastEncounterTime: number; // Timestamp of last encounter (for cooldown)
 }
 
 // ── Pokedex ────────────────────────────────────────────────
@@ -240,6 +242,7 @@ export interface BuddyConfig {
   reactionCooldownMs: number; // Default 30000
   statusLineEnabled: boolean;
   bellEnabled: boolean; // Terminal bell on level-up/encounters
+  encounterSpeed: "fast" | "normal" | "slow"; // Configurable encounter frequency
 }
 
 // ── XP Events (what triggers XP awards) ────────────────────

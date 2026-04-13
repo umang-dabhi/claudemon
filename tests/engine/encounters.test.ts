@@ -9,9 +9,13 @@ import {
   getEncounterTypes,
   generateEncounter,
   canCatch,
+  shouldBonusEncounter,
+  shouldDiversityBonus,
+  getTimeOfDayBias,
 } from "../../src/engine/encounters.js";
+import type { EncounterContext } from "../../src/engine/encounters.js";
 import { POKEMON_BY_ID } from "../../src/engine/pokemon-data.js";
-import { XP_PER_ENCOUNTER } from "../../src/engine/constants.js";
+import { ENCOUNTER_THRESHOLDS } from "../../src/engine/constants.js";
 import type {
   OwnedPokemon,
   PlayerState,
@@ -70,12 +74,33 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
       prs_merged: 0,
     },
     streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: { muted: false, reactionCooldownMs: 30000, statusLineEnabled: true, bellEnabled: true },
+    config: {
+      muted: false,
+      reactionCooldownMs: 30000,
+      statusLineEnabled: true,
+      bellEnabled: true,
+      encounterSpeed: "normal" as const,
+    },
     startedAt: "2026-04-13T00:00:00.000Z",
     totalXpEarned: 0,
     totalSessions: 0,
     pendingEncounter: null,
     xpSinceLastEncounter: 0,
+    recentToolTypes: [],
+    lastEncounterTime: 0,
+    ...overrides,
+  };
+}
+
+// ── Helper: build encounter context ─────────────────────────
+
+function makeContext(overrides: Partial<EncounterContext> = {}): EncounterContext {
+  return {
+    xpSinceLastEncounter: 0,
+    encounterSpeed: "normal",
+    currentStreak: 0,
+    recentToolTypes: [],
+    currentHour: 12,
     ...overrides,
   };
 }
@@ -83,20 +108,115 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
 // ── shouldTriggerEncounter Tests ─────────────────────────────
 
 describe("shouldTriggerEncounter", () => {
-  test("returns true at exactly 500 XP (XP_PER_ENCOUNTER)", () => {
-    expect(shouldTriggerEncounter(XP_PER_ENCOUNTER)).toBe(true);
-    expect(shouldTriggerEncounter(500)).toBe(true);
+  test("returns true at exactly normal threshold (250 XP)", () => {
+    expect(
+      shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: ENCOUNTER_THRESHOLDS.normal })),
+    ).toBe(true);
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 250 }))).toBe(true);
   });
 
-  test("returns true above 500 XP", () => {
-    expect(shouldTriggerEncounter(600)).toBe(true);
-    expect(shouldTriggerEncounter(1000)).toBe(true);
+  test("returns true above normal threshold", () => {
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 300 }))).toBe(true);
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 1000 }))).toBe(true);
   });
 
-  test("returns false under 500 XP", () => {
-    expect(shouldTriggerEncounter(0)).toBe(false);
-    expect(shouldTriggerEncounter(100)).toBe(false);
-    expect(shouldTriggerEncounter(499)).toBe(false);
+  test("returns false under normal threshold", () => {
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 0 }))).toBe(false);
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 100 }))).toBe(false);
+    expect(shouldTriggerEncounter(makeContext({ xpSinceLastEncounter: 249 }))).toBe(false);
+  });
+
+  test("fast speed triggers at 100 XP", () => {
+    expect(
+      shouldTriggerEncounter(makeContext({ encounterSpeed: "fast", xpSinceLastEncounter: 100 })),
+    ).toBe(true);
+    expect(
+      shouldTriggerEncounter(makeContext({ encounterSpeed: "fast", xpSinceLastEncounter: 99 })),
+    ).toBe(false);
+  });
+
+  test("slow speed triggers at 500 XP", () => {
+    expect(
+      shouldTriggerEncounter(makeContext({ encounterSpeed: "slow", xpSinceLastEncounter: 500 })),
+    ).toBe(true);
+    expect(
+      shouldTriggerEncounter(makeContext({ encounterSpeed: "slow", xpSinceLastEncounter: 499 })),
+    ).toBe(false);
+  });
+
+  test("7+ day streak halves the threshold", () => {
+    // Normal threshold 250 -> 125 with streak
+    expect(
+      shouldTriggerEncounter(makeContext({ currentStreak: 7, xpSinceLastEncounter: 125 })),
+    ).toBe(true);
+    expect(
+      shouldTriggerEncounter(makeContext({ currentStreak: 7, xpSinceLastEncounter: 124 })),
+    ).toBe(false);
+    // Below 7 days: no bonus
+    expect(
+      shouldTriggerEncounter(makeContext({ currentStreak: 6, xpSinceLastEncounter: 125 })),
+    ).toBe(false);
+  });
+});
+
+// ── shouldBonusEncounter Tests ───────────────────────────────
+
+describe("shouldBonusEncounter", () => {
+  test("returns a boolean", () => {
+    const result = shouldBonusEncounter();
+    expect(typeof result).toBe("boolean");
+  });
+});
+
+// ── shouldDiversityBonus Tests ───────────────────────────────
+
+describe("shouldDiversityBonus", () => {
+  test("returns false with fewer than 3 unique tool types", () => {
+    expect(shouldDiversityBonus([])).toBe(false);
+    expect(shouldDiversityBonus(["commit"])).toBe(false);
+    expect(shouldDiversityBonus(["commit", "bug_fix"])).toBe(false);
+  });
+
+  test("returns true with 3+ unique tool types", () => {
+    expect(shouldDiversityBonus(["commit", "bug_fix", "test_pass"])).toBe(true);
+    expect(shouldDiversityBonus(["commit", "bug_fix", "test_pass", "build_success"])).toBe(true);
+  });
+
+  test("ignores duplicate tool types", () => {
+    expect(shouldDiversityBonus(["commit", "commit", "commit"])).toBe(false);
+    expect(shouldDiversityBonus(["commit", "bug_fix", "commit", "bug_fix"])).toBe(false);
+  });
+});
+
+// ── getTimeOfDayBias Tests ───────────────────────────────────
+
+describe("getTimeOfDayBias", () => {
+  test("returns Ghost/Poison at night (22-4)", () => {
+    expect(getTimeOfDayBias(22)).toEqual(["Ghost", "Poison"]);
+    expect(getTimeOfDayBias(23)).toEqual(["Ghost", "Poison"]);
+    expect(getTimeOfDayBias(0)).toEqual(["Ghost", "Poison"]);
+    expect(getTimeOfDayBias(3)).toEqual(["Ghost", "Poison"]);
+  });
+
+  test("returns Grass/Bug in morning (5-8)", () => {
+    expect(getTimeOfDayBias(5)).toEqual(["Grass", "Bug"]);
+    expect(getTimeOfDayBias(8)).toEqual(["Grass", "Bug"]);
+  });
+
+  test("returns Fire/Rock at midday (12-13)", () => {
+    expect(getTimeOfDayBias(12)).toEqual(["Fire", "Rock"]);
+    expect(getTimeOfDayBias(13)).toEqual(["Fire", "Rock"]);
+  });
+
+  test("returns Water/Flying in evening (17-19)", () => {
+    expect(getTimeOfDayBias(17)).toEqual(["Water", "Flying"]);
+    expect(getTimeOfDayBias(19)).toEqual(["Water", "Flying"]);
+  });
+
+  test("returns empty array for non-biased hours", () => {
+    expect(getTimeOfDayBias(10)).toEqual([]);
+    expect(getTimeOfDayBias(15)).toEqual([]);
+    expect(getTimeOfDayBias(21)).toEqual([]);
   });
 });
 

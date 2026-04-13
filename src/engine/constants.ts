@@ -46,8 +46,17 @@ export const STAT_DISPLAY_NAMES: Record<CodingStat, string> = {
 
 // ── Encounter Rate ─────────────────────────────────────────
 
-/** XP earned between wild encounters */
-export const XP_PER_ENCOUNTER = 500;
+/** XP thresholds for encounter triggers by speed setting */
+export const ENCOUNTER_THRESHOLDS = {
+  fast: 100,
+  normal: 250,
+  slow: 500,
+} as const;
+
+export type EncounterSpeed = keyof typeof ENCOUNTER_THRESHOLDS;
+
+/** Default encounter speed */
+export const DEFAULT_ENCOUNTER_SPEED: EncounterSpeed = "normal";
 
 // ── Reaction Cooldown ──────────────────────────────────────
 

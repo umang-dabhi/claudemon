@@ -1,7 +1,8 @@
 /**
  * Wild encounter system.
- * Pokemon appear based on coding activity type and are catchable
- * based on the active Pokemon's stats and level.
+ * Pokemon appear based on coding activity type, streak bonuses,
+ * tool diversity, and time-of-day biases. Catch eligibility is
+ * determined by the active Pokemon's stats and level.
  */
 
 import type {
@@ -14,7 +15,8 @@ import type {
   CodingStat,
   RarityTier,
 } from "./types.js";
-import { XP_PER_ENCOUNTER } from "./constants.js";
+import { ENCOUNTER_THRESHOLDS } from "./constants.js";
+import type { EncounterSpeed } from "./constants.js";
 import { POKEMON_BY_ID } from "./pokemon-data.js";
 import { TYPE_POOLS } from "./encounter-pool.js";
 
@@ -41,14 +43,55 @@ export function getEncounterTypes(eventType: XpEventType): readonly PokemonType[
   return ENCOUNTER_TYPE_MAP[eventType];
 }
 
+// ── Encounter Context ─────────────────────────────────────────
+
+export interface EncounterContext {
+  xpSinceLastEncounter: number;
+  encounterSpeed: EncounterSpeed;
+  currentStreak: number;
+  recentToolTypes: string[]; // tool types used recently
+  currentHour: number; // 0-23
+}
+
 // ── Encounter Trigger ─────────────────────────────────────────
 
 /**
- * Check if a wild encounter should trigger based on XP earned since last encounter.
- * Returns true roughly every XP_PER_ENCOUNTER (500) XP.
+ * Check if a wild encounter should trigger based on XP earned,
+ * encounter speed setting, and streak bonus.
+ * Streak bonus: 7+ day streak halves the threshold.
  */
-export function shouldTriggerEncounter(xpSinceLastEncounter: number): boolean {
-  return xpSinceLastEncounter >= XP_PER_ENCOUNTER;
+export function shouldTriggerEncounter(ctx: EncounterContext): boolean {
+  const threshold = ENCOUNTER_THRESHOLDS[ctx.encounterSpeed];
+
+  // Streak bonus: 7+ day streak = halve the threshold
+  const streakMultiplier = ctx.currentStreak >= 7 ? 0.5 : 1;
+  const effectiveThreshold = Math.floor(threshold * streakMultiplier);
+
+  if (ctx.xpSinceLastEncounter < effectiveThreshold) return false;
+
+  return true;
+}
+
+/** Check for bonus encounter (10% chance after a regular encounter). */
+export function shouldBonusEncounter(): boolean {
+  return Math.random() < 0.1;
+}
+
+/** Check for activity diversity bonus (3+ unique tool types in recent history). */
+export function shouldDiversityBonus(recentToolTypes: string[]): boolean {
+  const uniqueTypes = new Set(recentToolTypes);
+  return uniqueTypes.size >= 3;
+}
+
+// ── Time-of-Day Bias ──────────────────────────────────────────
+
+/** Get time-of-day type biases for encounter generation. */
+export function getTimeOfDayBias(hour: number): PokemonType[] {
+  if (hour >= 22 || hour < 5) return ["Ghost", "Poison"]; // Night: Ghost types
+  if (hour >= 5 && hour < 9) return ["Grass", "Bug"]; // Morning: Grass types
+  if (hour >= 12 && hour < 14) return ["Fire", "Rock"]; // Midday: Fire types
+  if (hour >= 17 && hour < 20) return ["Water", "Flying"]; // Evening: Water types
+  return []; // No bias
 }
 
 // ── Rarity Weights ────────────────────────────────────────────
@@ -235,14 +278,27 @@ function determineEncounterLevel(state: PlayerState, seed: number): number {
 /**
  * Generate a wild encounter based on the activity type.
  * Picks a Pokemon from the matching type pool, weighted by rarity.
- * Excludes Pokemon already in the player's party/box (unless duplicates are common tier).
+ * If time-of-day bias types are provided, there is a 40% chance to
+ * use those types instead of the activity-based types.
+ * Excludes Pokemon already in the player's party/box (unless common tier).
  * Returns null if no eligible Pokemon found.
  */
 export function generateEncounter(
   eventType: XpEventType,
   state: PlayerState,
+  timeOfDayTypes?: readonly PokemonType[],
 ): WildEncounter | null {
-  const types = getEncounterTypes(eventType);
+  let types = getEncounterTypes(eventType);
+
+  // 40% chance to use time-of-day biased types if available
+  if (timeOfDayTypes && timeOfDayTypes.length > 0) {
+    const seed = Math.floor(Date.now() / 1000);
+    const biasRoll = seededRandom(seed + 42);
+    if (biasRoll < 0.4) {
+      types = timeOfDayTypes;
+    }
+  }
+
   const candidates = buildCandidatePool(types, state);
 
   if (candidates.length === 0) return null;

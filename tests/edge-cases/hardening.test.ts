@@ -95,12 +95,20 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
       prs_merged: 0,
     },
     streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, totalDaysActive: 0 },
-    config: { muted: false, reactionCooldownMs: 30000, statusLineEnabled: true, bellEnabled: true },
+    config: {
+      muted: false,
+      reactionCooldownMs: 30000,
+      statusLineEnabled: true,
+      bellEnabled: true,
+      encounterSpeed: "normal" as const,
+    },
     startedAt: "2026-04-13T00:00:00.000Z",
     totalXpEarned: 0,
     totalSessions: 0,
     pendingEncounter: null,
     xpSinceLastEncounter: 0,
+    recentToolTypes: [],
+    lastEncounterTime: 0,
     ...overrides,
   };
 }
@@ -410,11 +418,27 @@ describe("evolution edge cases", () => {
 
 describe("encounter edge cases", () => {
   test("shouldTriggerEncounter with 0 XP returns false", () => {
-    expect(shouldTriggerEncounter(0)).toBe(false);
+    expect(
+      shouldTriggerEncounter({
+        xpSinceLastEncounter: 0,
+        encounterSpeed: "normal",
+        currentStreak: 0,
+        recentToolTypes: [],
+        currentHour: 12,
+      }),
+    ).toBe(false);
   });
 
   test("shouldTriggerEncounter with negative XP returns false", () => {
-    expect(shouldTriggerEncounter(-100)).toBe(false);
+    expect(
+      shouldTriggerEncounter({
+        xpSinceLastEncounter: -100,
+        encounterSpeed: "normal",
+        currentStreak: 0,
+        recentToolTypes: [],
+        currentHour: 12,
+      }),
+    ).toBe(false);
   });
 
   test("generateEncounter with player who caught everything still works", () => {

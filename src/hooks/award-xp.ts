@@ -4,6 +4,8 @@
  *
  * Loads state, awards XP to the active Pokemon, applies stat boosts,
  * increments the event counter, updates the streak, and saves.
+ * Supports enhanced encounter triggers: streak bonuses, time-of-day bias,
+ * bonus encounters (10%), and tool diversity encounters.
  * Emits a terminal bell on level-up.
  */
 
@@ -14,7 +16,16 @@ import { addXp, createXpEvent } from "../engine/xp.js";
 import { applyStatBoost } from "../engine/stats.js";
 import { POKEMON_BY_ID } from "../engine/pokemon-data.js";
 import { checkEvolution, getNewlyEarnedBadges } from "../engine/evolution.js";
-import { shouldTriggerEncounter, generateEncounter } from "../engine/encounters.js";
+import {
+  shouldTriggerEncounter,
+  generateEncounter,
+  shouldBonusEncounter,
+  shouldDiversityBonus,
+  getTimeOfDayBias,
+} from "../engine/encounters.js";
+import type { EncounterContext } from "../engine/encounters.js";
+
+const MAX_RECENT_TOOL_TYPES = 20;
 
 const eventType = process.argv[2] as XpEventType;
 const counterKey = process.argv[3] as EventCounterKey | undefined;
@@ -60,6 +71,14 @@ if (counterKey) {
   state.counters[counterKey] += 1;
 }
 
+// Track tool type for diversity bonus (keep last MAX_RECENT_TOOL_TYPES entries)
+const recentToolTypes = state.recentToolTypes ?? [];
+recentToolTypes.push(eventType);
+if (recentToolTypes.length > MAX_RECENT_TOOL_TYPES) {
+  recentToolTypes.splice(0, recentToolTypes.length - MAX_RECENT_TOOL_TYPES);
+}
+state.recentToolTypes = recentToolTypes;
+
 // Update the daily coding streak
 // Inline the streak logic to avoid the extra save from updateStreak()
 const today = new Date();
@@ -100,15 +119,55 @@ for (const badge of newBadges) {
 // Check if evolution is available (sets flag in status for status line indicator)
 const evolutionReady = checkEvolution(pokemon, state) !== null;
 
-// Track XP toward next encounter and trigger if threshold met
-state.xpSinceLastEncounter = (state.xpSinceLastEncounter ?? 0) + xpEvent.xp;
+// Build encounter context for the enhanced trigger system
+const encounterSpeed = state.config.encounterSpeed ?? "normal";
+const currentHour = new Date().getHours();
+const timeOfDayTypes = getTimeOfDayBias(currentHour);
+
+const encounterCtx: EncounterContext = {
+  xpSinceLastEncounter: (state.xpSinceLastEncounter ?? 0) + xpEvent.xp,
+  encounterSpeed,
+  currentStreak: streak.currentStreak,
+  recentToolTypes: state.recentToolTypes,
+  currentHour,
+};
+
+// Track XP toward next encounter
+state.xpSinceLastEncounter = encounterCtx.xpSinceLastEncounter;
 let encounterTriggered = false;
 
-if (shouldTriggerEncounter(state.xpSinceLastEncounter) && !state.pendingEncounter) {
-  const encounter = generateEncounter(eventType, state);
+if (shouldTriggerEncounter(encounterCtx) && !state.pendingEncounter) {
+  const encounter = generateEncounter(eventType, state, timeOfDayTypes);
   if (encounter) {
     state.pendingEncounter = encounter;
     state.xpSinceLastEncounter = 0;
+    state.lastEncounterTime = Date.now();
+    encounterTriggered = true;
+
+    // 10% chance for a bonus encounter after a regular one
+    // (bonus replaces the pending encounter with a second roll)
+    if (shouldBonusEncounter()) {
+      const bonusEncounter = generateEncounter(eventType, state, timeOfDayTypes);
+      if (bonusEncounter) {
+        // The bonus encounter replaces the first; first is already set as pending
+        // In practice the player still sees one encounter per trigger,
+        // but the bonus gives them a fresh roll (potentially rarer Pokemon)
+        state.pendingEncounter = bonusEncounter;
+      }
+    }
+  }
+}
+
+// Tool diversity bonus: if 3+ unique tool types used recently and no pending encounter,
+// grant an extra encounter opportunity
+if (!encounterTriggered && !state.pendingEncounter && shouldDiversityBonus(state.recentToolTypes)) {
+  const diversityEncounter = generateEncounter(eventType, state, timeOfDayTypes);
+  if (diversityEncounter) {
+    state.pendingEncounter = diversityEncounter;
+    state.xpSinceLastEncounter = 0;
+    state.lastEncounterTime = Date.now();
+    // Clear recent tool types after diversity bonus triggers
+    state.recentToolTypes = [];
     encounterTriggered = true;
   }
 }

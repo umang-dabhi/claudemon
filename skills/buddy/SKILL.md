@@ -41,6 +41,9 @@ This ensures first-time users get the starter selection flow automatically.
 | `rename` (empty) | `buddy_rename` with name="" — reset to species name |
 | `hide` | `buddy_hide` — hide sprite from status line |
 | `unhide` | `buddy_unhide` — show sprite in status line |
+| `settings encounter-speed fast` | `buddy_settings` with setting="encounter-speed", value="fast" — fastest encounters (100 XP) |
+| `settings encounter-speed normal` | `buddy_settings` with setting="encounter-speed", value="normal" — default (250 XP) |
+| `settings encounter-speed slow` | `buddy_settings` with setting="encounter-speed", value="slow" — less interruptions (500 XP) |
 | `help` | List all available /buddy commands |
 
 Pass $ARGUMENTS to determine which subcommand to route to.
