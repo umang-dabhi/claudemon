@@ -1,6 +1,6 @@
 {
   "name": "@umang-boss/claudemon",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Pokemon Gen 1 coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
   "main": "dist/src/server/index.js",
