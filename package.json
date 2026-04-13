@@ -1,13 +1,14 @@
 {
   "name": "@umang-boss/claudemon",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Pokemon Gen 1 coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
-  "main": "src/server/index.ts",
+  "main": "dist/src/server/index.js",
   "bin": {
     "claudemon": "bin/claudemon.js"
   },
   "files": [
+    "dist/",
     "src/",
     "cli/",
     "bin/",
@@ -16,16 +17,17 @@
     "sprites/",
     "statusline/",
     "scripts/",
-    "package.json",
-    "tsconfig.json",
+    "tsconfig.build.json",
     "bunfig.toml"
   ],
   "scripts": {
-    "server": "bun run src/server/index.ts",
-    "install-buddy": "bun run cli/install.ts",
-    "uninstall-buddy": "bun run cli/uninstall.ts",
-    "doctor": "bun run cli/doctor.ts",
-    "update-buddy": "bun run cli/update.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "server": "node dist/src/server/index.js",
+    "install-buddy": "node dist/cli/install.js",
+    "uninstall-buddy": "node dist/cli/uninstall.js",
+    "doctor": "node dist/cli/doctor.js",
+    "update-buddy": "node dist/cli/update.js",
     "download-sprites": "bun run scripts/download-colorscripts.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
@@ -62,7 +64,6 @@
     "url": "https://github.com/umang-dabhi/claudemon/issues"
   },
   "engines": {
-    "node": ">=18",
-    "bun": ">=1.0"
+    "node": ">=18"
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Claudemon CLI wrapper — detects Bun and delegates to it.
- * Works with `npx claudemon` even on systems with only Node.js.
+ * Claudemon CLI — works with Node.js (no Bun required for users).
+ * Routes to install/uninstall/update/doctor.
  */
 
 import { spawnSync } from "node:child_process";
@@ -10,43 +10,53 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cliEntry = resolve(__dirname, "..", "cli", "index.ts");
 const args = process.argv.slice(2);
 
-// Find bun binary
-function findBun() {
-  const home = process.env.HOME || "";
-  const candidates = [
-    `${home}/.bun/bin/bun`,
-    "/usr/local/bin/bun",
-    "/usr/bin/bun",
-  ];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
-  }
-  // Try PATH
-  const result = spawnSync("which", ["bun"], { stdio: "pipe" });
-  if (result.status === 0) return "bun";
-  return null;
-}
+// Try compiled JS first (dist/), then fall back to TS with bun
+const distCli = resolve(__dirname, "..", "dist", "cli", "index.js");
+const srcCli = resolve(__dirname, "..", "cli", "index.ts");
 
-const bunPath = findBun();
-
-if (bunPath) {
-  const result = spawnSync(bunPath, ["run", cliEntry, ...args], {
+if (existsSync(distCli)) {
+  // Run compiled JS with node
+  const result = spawnSync("node", [distCli, ...args], {
     stdio: "inherit",
     env: process.env,
   });
   process.exit(result.status ?? 1);
 } else {
+  // Fallback: try bun with source TS
+  const home = process.env.HOME || "";
+  const bunPaths = [`${home}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
+  let bunPath = null;
+
+  for (const p of bunPaths) {
+    if (existsSync(p)) {
+      bunPath = p;
+      break;
+    }
+  }
+
+  if (!bunPath) {
+    const which = spawnSync("which", ["bun"], { stdio: "pipe" });
+    if (which.status === 0) bunPath = "bun";
+  }
+
+  if (bunPath && existsSync(srcCli)) {
+    const result = spawnSync(bunPath, ["run", srcCli, ...args], {
+      stdio: "inherit",
+      env: process.env,
+    });
+    process.exit(result.status ?? 1);
+  }
+
   console.error(`
-  Claudemon requires Bun (https://bun.sh) to run.
+  Error: Could not find compiled files (dist/) or Bun runtime.
 
-  Install Bun:
+  If you installed via npm, try reinstalling:
+    npm install -g @umang-boss/claudemon
+
+  Or install Bun and run from source:
     curl -fsSL https://bun.sh/install | bash
-
-  Then run:
-    npx claudemon install
   `);
   process.exit(1);
 }

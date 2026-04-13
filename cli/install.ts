@@ -7,6 +7,7 @@
 
 import { mkdir, copyFile, chmod, access } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
+import { spawnSync } from "node:child_process";
 
 import type { ClaudeConfig, ClaudeSettings, HookCommand, HookMatcher } from "./shared.js";
 import {
@@ -25,8 +26,7 @@ import {
   STOP_HOOK_SCRIPT,
   USER_PROMPT_HOOK_SCRIPT,
   STATUSLINE_SCRIPT,
-  SERVER_ENTRY,
-  getBunPath,
+  getRuntime,
 } from "./shared.js";
 
 // ── Step 1: Check Prerequisites ──────────────────────────────
@@ -36,10 +36,10 @@ async function checkPrerequisites(): Promise<boolean> {
 
   // Check bun (sanity)
   try {
-    const proc = Bun.spawn(["bun", "--version"], { stdout: "pipe", stderr: "pipe" });
-    const output = await new Response(proc.stdout).text();
-    await proc.exited;
-    ok(`Bun runtime: v${output.trim()}`);
+    const result = spawnSync("bun", ["--version"], { stdio: "pipe" });
+    if (result.error) throw result.error;
+    const output = result.stdout?.toString().trim();
+    ok(`Bun runtime: v${output}`);
   } catch {
     fail("Bun runtime not found. Install from https://bun.sh");
     allGood = false;
@@ -76,8 +76,8 @@ async function registerMcpServer(): Promise<void> {
   }
 
   config.mcpServers["claudemon"] = {
-    command: getBunPath(),
-    args: ["run", SERVER_ENTRY],
+    command: getRuntime().command,
+    args: [getRuntime().serverEntry],
     env: {},
   };
 

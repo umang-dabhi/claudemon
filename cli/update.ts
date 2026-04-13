@@ -10,9 +10,9 @@
  */
 
 import { mkdir, copyFile, chmod, access } from "node:fs/promises";
-import { constants as fsConstants } from "node:fs";
+import { constants as fsConstants, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 
 import type { ClaudeConfig, ClaudeSettings, HookCommand, HookMatcher } from "./shared.js";
 import {
@@ -32,9 +32,8 @@ import {
   STOP_HOOK_SCRIPT,
   USER_PROMPT_HOOK_SCRIPT,
   STATUSLINE_SCRIPT,
-  SERVER_ENTRY,
   PROJECT_DIR,
-  getBunPath,
+  getRuntime,
 } from "./shared.js";
 
 // ── Step 1: Check Prerequisites ──────────────────────────────
@@ -43,10 +42,10 @@ async function checkPrerequisites(): Promise<boolean> {
   let allGood = true;
 
   try {
-    const proc = Bun.spawn(["bun", "--version"], { stdout: "pipe", stderr: "pipe" });
-    const output = await new Response(proc.stdout).text();
-    await proc.exited;
-    ok(`Bun runtime: v${output.trim()}`);
+    const result = spawnSync("bun", ["--version"], { stdio: "pipe" });
+    if (result.error) throw result.error;
+    const output = result.stdout?.toString().trim();
+    ok(`Bun runtime: v${output}`);
   } catch {
     fail("Bun runtime not found.");
     allGood = false;
@@ -122,8 +121,8 @@ async function registerMcpServer(): Promise<void> {
   }
 
   config.mcpServers["claudemon"] = {
-    command: getBunPath(),
-    args: ["run", SERVER_ENTRY],
+    command: getRuntime().command,
+    args: [getRuntime().serverEntry],
     env: {},
   };
 
@@ -240,7 +239,7 @@ async function checkColorscripts(): Promise<{ missing: number; total: number }> 
     }
 
     // Check for files matching the pattern
-    const files = await Array.fromAsync(new Bun.Glob(`${prefix}*.txt`).scan(smallDir));
+    const files = readdirSync(smallDir).filter((f) => f.startsWith(prefix) && f.endsWith(".txt"));
     if (files.length === 0) {
       missing++;
     }
@@ -252,10 +251,10 @@ async function checkColorscripts(): Promise<{ missing: number; total: number }> 
 // ── Step 5: State Preservation Check ─────────────────────────
 
 async function checkStatePreserved(): Promise<void> {
-  const stateFile = Bun.file(`${STATE_DIR}/state.json`);
-  if (await stateFile.exists()) {
+  try {
+    await access(`${STATE_DIR}/state.json`, fsConstants.F_OK);
     ok("State data: preserved (not modified)");
-  } else {
+  } catch {
     info("State data: no save file found (run /buddy starter to begin)");
   }
 }

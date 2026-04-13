@@ -4,6 +4,7 @@
  */
 
 import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // ── Config shape interfaces ──────────────────────────────────
 
@@ -50,7 +51,9 @@ if (!HOME) {
 }
 
 export const CLI_HOME = HOME;
-export const PROJECT_DIR = resolve(dirname(import.meta.dir));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+export const PROJECT_DIR = resolve(dirname(__dirname));
 export const CLAUDE_DIR = `${HOME}/.claude`;
 export const CLAUDE_CONFIG = `${HOME}/.claude.json`;
 export const CLAUDE_SETTINGS = `${CLAUDE_DIR}/settings.json`;
@@ -62,16 +65,28 @@ export const HOOK_SCRIPT = `${PROJECT_DIR}/hooks/post-tool-use.sh`;
 export const STOP_HOOK_SCRIPT = `${PROJECT_DIR}/hooks/stop.sh`;
 export const USER_PROMPT_HOOK_SCRIPT = `${PROJECT_DIR}/hooks/user-prompt-submit.sh`;
 export const STATUSLINE_SCRIPT = `${PROJECT_DIR}/statusline/buddy-status.sh`;
-export const SERVER_ENTRY = `${PROJECT_DIR}/src/server/index.ts`;
+export const SERVER_ENTRY_TS = `${PROJECT_DIR}/src/server/index.ts`;
+export const SERVER_ENTRY_JS = `${PROJECT_DIR}/dist/src/server/index.js`;
 
-/** Resolve full path to bun binary (Claude Code may not have bun in PATH) */
-export function getBunPath(): string {
+/** Find the best runtime and server entry — prefers bun (fast), falls back to node (compiled JS) */
+export function getRuntime(): { command: string; serverEntry: string } {
   const { existsSync } = require("node:fs") as { existsSync: (p: string) => boolean };
-  const candidates = [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
+
+  // Check for bun (can run .ts directly)
+  const bunCandidates = [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
+  for (const p of bunCandidates) {
+    if (existsSync(p)) {
+      return { command: p, serverEntry: SERVER_ENTRY_TS };
+    }
   }
-  return "bun";
+
+  // Fall back to node (needs compiled .js from dist/)
+  if (existsSync(SERVER_ENTRY_JS)) {
+    return { command: "node", serverEntry: SERVER_ENTRY_JS };
+  }
+
+  // Last resort: assume bun in PATH
+  return { command: "bun", serverEntry: SERVER_ENTRY_TS };
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -89,14 +104,18 @@ export function info(msg: string): void {
 }
 
 export async function readJson<T>(path: string): Promise<T | null> {
-  const file = Bun.file(path);
-  if (!(await file.exists())) {
+  const { readFile, access } = await import("node:fs/promises");
+  const { constants } = await import("node:fs");
+  try {
+    await access(path, constants.F_OK);
+    const text = await readFile(path, "utf-8");
+    return JSON.parse(text) as T;
+  } catch {
     return null;
   }
-  const text = await file.text();
-  return JSON.parse(text) as T;
 }
 
 export async function writeJson(path: string, data: unknown): Promise<void> {
-  await Bun.write(path, JSON.stringify(data, null, 2) + "\n");
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 }

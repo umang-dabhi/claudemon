@@ -4,10 +4,13 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { POKEMON_BY_ID } from "../engine/pokemon-data.js";
 
-const COLORSCRIPT_DIR = join(import.meta.dir, "../../sprites/colorscripts/small");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const COLORSCRIPT_DIR = join(__dirname, "../../sprites/colorscripts/small");
 
 const cache = new Map<number, string>();
 

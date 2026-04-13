@@ -10,10 +10,24 @@
 _claudemon_post_tool_use() {
   # ── Locate dependencies ────────────────────────────────────
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-  BUN_PATH="${HOME}/.bun/bin/bun"
+  PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-  # Bail silently if bun is not installed
-  if [ ! -x "$BUN_PATH" ]; then
+  # Find runtime: prefer bun, fall back to node
+  RUNTIME=""
+  SCRIPTS_DIR=""
+  if [ -x "${HOME}/.bun/bin/bun" ]; then
+    RUNTIME="${HOME}/.bun/bin/bun"
+    SCRIPTS_DIR="$PROJECT_DIR/src/hooks"
+    SCRIPT_EXT=".ts"
+  elif command -v bun >/dev/null 2>&1; then
+    RUNTIME="bun"
+    SCRIPTS_DIR="$PROJECT_DIR/src/hooks"
+    SCRIPT_EXT=".ts"
+  elif command -v node >/dev/null 2>&1; then
+    RUNTIME="node"
+    SCRIPTS_DIR="$PROJECT_DIR/dist/src/hooks"
+    SCRIPT_EXT=".js"
+  else
     return 0
   fi
 
@@ -115,10 +129,10 @@ _claudemon_post_tool_use() {
 
   if [ -n "$EVENT" ]; then
     # XP award + counter increment
-    timeout 3 "$BUN_PATH" run "$SCRIPT_DIR/../src/hooks/award-xp.ts" "$EVENT" "$COUNTER" 2>/dev/null &
+    timeout 3 "$RUNTIME" "$SCRIPTS_DIR/award-xp${SCRIPT_EXT}" "$EVENT" "$COUNTER" 2>/dev/null &
   elif [ -n "$COUNTER" ]; then
     # Counter-only increment (no XP)
-    timeout 3 "$BUN_PATH" run "$SCRIPT_DIR/../src/hooks/increment-counter.ts" "$COUNTER" 2>/dev/null &
+    timeout 3 "$RUNTIME" "$SCRIPTS_DIR/increment-counter${SCRIPT_EXT}" "$EVENT" "$COUNTER" 2>/dev/null &
   fi
 }
 

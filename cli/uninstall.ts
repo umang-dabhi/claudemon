@@ -5,7 +5,8 @@
  * Usage: bun run cli/uninstall.ts
  */
 
-import { rm } from "node:fs/promises";
+import { rm, access } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
 
 import type { ClaudeConfig, ClaudeSettings } from "./shared.js";
 import {
@@ -106,8 +107,9 @@ async function removeHooks(): Promise<void> {
 // ── Step 3: Remove Skill ─────────────────────────────────────
 
 async function removeSkill(): Promise<void> {
-  const file = Bun.file(`${SKILL_DEST_DIR}/SKILL.md`);
-  if (!(await file.exists())) {
+  try {
+    await access(`${SKILL_DEST_DIR}/SKILL.md`, fsConstants.F_OK);
+  } catch {
     info("Skill: ~/.claude/skills/buddy/ not found (nothing to remove)");
     return;
   }
@@ -119,10 +121,10 @@ async function removeSkill(): Promise<void> {
 // ── Step 4: Preserve State Data ──────────────────────────────
 
 async function preserveStateData(): Promise<void> {
-  const stateFile = Bun.file(`${STATE_DIR}/state.json`);
-  if (await stateFile.exists()) {
+  try {
+    await access(`${STATE_DIR}/state.json`, fsConstants.F_OK);
     info(`Your Pokemon data is preserved at ${STATE_DIR}/. Delete manually to remove.`);
-  } else {
+  } catch {
     info(`State directory: ${STATE_DIR}/ (kept, no state file found)`);
   }
 }

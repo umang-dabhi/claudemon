@@ -5,9 +5,11 @@
  * Usage: bun run cli/doctor.ts
  */
 
-import { access, stat, unlink, readdir } from "node:fs/promises";
+import { access, stat, unlink, readdir, readFile } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { StateManager } from "../src/state/state-manager.js";
 import { PlayerStateSchema } from "../src/state/schemas.js";
 
@@ -28,7 +30,9 @@ const STATE_FILE = `${STATE_DIR}/state.json`;
 const LOCK_FILE = `${STATE_DIR}/state.lock`;
 const LOCK_MAX_AGE_MS = 5000;
 const EXPECTED_SPRITE_COUNT = 151;
-const COLORSCRIPT_DIR = resolve(dirname(import.meta.dir), "sprites/colorscripts/small");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const COLORSCRIPT_DIR = resolve(dirname(__dirname), "sprites/colorscripts/small");
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -47,10 +51,10 @@ function formatCheck(result: CheckResult): string {
 
 async function checkBun(): Promise<CheckResult> {
   try {
-    const proc = Bun.spawn(["bun", "--version"], { stdout: "pipe", stderr: "pipe" });
-    const output = await new Response(proc.stdout).text();
-    await proc.exited;
-    return { label: "Bun runtime", passed: true, detail: `v${output.trim()}` };
+    const result = spawnSync("bun", ["--version"], { stdio: "pipe" });
+    if (result.error) throw result.error;
+    const output = result.stdout?.toString().trim();
+    return { label: "Bun runtime", passed: true, detail: `v${output}` };
   } catch {
     return { label: "Bun runtime", passed: false, detail: "not found" };
   }
@@ -74,13 +78,14 @@ async function checkStateDir(): Promise<CheckResult> {
 // ── Check 3: State File ──────────────────────────────────────
 
 async function checkStateFile(): Promise<CheckResult> {
-  const file = Bun.file(STATE_FILE);
-  if (!(await file.exists())) {
+  try {
+    await access(STATE_FILE, fsConstants.F_OK);
+  } catch {
     return { label: "State file", passed: false, detail: "not found (run /buddy starter first)" };
   }
 
   try {
-    const text = await file.text();
+    const text = await readFile(STATE_FILE, "utf-8");
     const data = JSON.parse(text) as Record<string, unknown>;
 
     // Check for active pokemon
@@ -150,11 +155,12 @@ async function checkHooks(): Promise<CheckResult> {
 // ── Check 6: Skill ───────────────────────────────────────────
 
 async function checkSkill(): Promise<CheckResult> {
-  const file = Bun.file(SKILL_DEST);
-  if (await file.exists()) {
+  try {
+    await access(SKILL_DEST, fsConstants.F_OK);
     return { label: "Skill", passed: true, detail: "/buddy command installed" };
+  } catch {
+    return { label: "Skill", passed: false, detail: "~/.claude/skills/buddy/SKILL.md not found" };
   }
-  return { label: "Skill", passed: false, detail: "~/.claude/skills/buddy/SKILL.md not found" };
 }
 
 // ── Check 7: Hook Script Executable ──────────────────────────
@@ -164,15 +170,16 @@ async function checkHookScript(): Promise<CheckResult> {
     await access(HOOK_SCRIPT, fsConstants.X_OK);
     return { label: "Hook script", passed: true, detail: "executable" };
   } catch {
-    const file = Bun.file(HOOK_SCRIPT);
-    if (await file.exists()) {
+    try {
+      await access(HOOK_SCRIPT, fsConstants.F_OK);
       return {
         label: "Hook script",
         passed: false,
         detail: "exists but not executable (run chmod +x)",
       };
+    } catch {
+      return { label: "Hook script", passed: false, detail: "not found" };
     }
-    return { label: "Hook script", passed: false, detail: "not found" };
   }
 }
 
@@ -255,13 +262,14 @@ async function checkSpriteCount(): Promise<CheckResult> {
 // ── Check 11: State File Validity (Zod) ─────────────────────
 
 async function checkStateValidity(): Promise<CheckResult> {
-  const file = Bun.file(STATE_FILE);
-  if (!(await file.exists())) {
+  try {
+    await access(STATE_FILE, fsConstants.F_OK);
+  } catch {
     return { label: "State validity", passed: true, detail: "no state file yet" };
   }
 
   try {
-    const text = await file.text();
+    const text = await readFile(STATE_FILE, "utf-8");
     if (!text.trim()) {
       return { label: "State validity", passed: false, detail: "state file is empty" };
     }
