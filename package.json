@@ -1,12 +1,25 @@
 {
   "name": "claudemon",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Pokemon Gen 1 coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
   "main": "src/server/index.ts",
   "bin": {
-    "claudemon": "cli/index.ts"
+    "claudemon": "bin/claudemon.js"
   },
+  "files": [
+    "src/",
+    "cli/",
+    "bin/",
+    "hooks/",
+    "skills/",
+    "sprites/",
+    "statusline/",
+    "scripts/",
+    "package.json",
+    "tsconfig.json",
+    "bunfig.toml"
+  ],
   "scripts": {
     "server": "bun run src/server/index.ts",
     "install-buddy": "bun run cli/install.ts",
@@ -33,8 +46,23 @@
     "mcp",
     "pokemon",
     "coding-companion",
-    "gamification"
+    "gamification",
+    "claudemon",
+    "terminal-art",
+    "status-line"
   ],
-  "author": "Umang Dabhi",
-  "license": "MIT"
+  "author": "Umang Dabhi <umang@dabhi.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/umang-dabhi/claudemon.git"
+  },
+  "homepage": "https://github.com/umang-dabhi/claudemon",
+  "bugs": {
+    "url": "https://github.com/umang-dabhi/claudemon/issues"
+  },
+  "engines": {
+    "node": ">=18",
+    "bun": ">=1.0"
+  }
 }
