@@ -59,10 +59,9 @@ export function registerCatchTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "You don't have a Pokemon yet! Use buddy_starter to pick your first partner.",
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion before catching wild Pokemon!",
             },
           ],
-          isError: true,
         };
       }
 
@@ -98,10 +97,9 @@ export function registerCatchTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "No active Pokemon found in your party.",
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion before catching wild Pokemon!",
             },
           ],
-          isError: true,
         };
       }
 

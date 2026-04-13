@@ -30,10 +30,9 @@ export function registerShowTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "You don't have a Pokemon yet! Use buddy_starter to pick your first partner.",
+              text: "Welcome to Claudemon! You don't have a Pokemon yet. Use /buddy starter to pick your first companion!",
             },
           ],
-          isError: true,
         };
       }
 

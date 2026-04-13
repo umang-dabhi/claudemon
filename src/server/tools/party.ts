@@ -28,10 +28,9 @@ export function registerPartyTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "You don't have a Pokemon yet! Use buddy_starter to pick your first partner.",
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion and build your party!",
             },
           ],
-          isError: true,
         };
       }
 

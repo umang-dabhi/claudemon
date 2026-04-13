@@ -58,10 +58,9 @@ export function registerAchievementsTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "You don't have a Pokemon yet! Use buddy_starter to begin your journey.",
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion and start earning achievements!",
             },
           ],
-          isError: true,
         };
       }
 

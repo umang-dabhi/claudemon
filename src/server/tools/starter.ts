@@ -116,7 +116,6 @@ export function registerStarterTool(server: McpServer): void {
               text: "You already have a Pokemon partner! Use buddy_show to check on them.",
             },
           ],
-          isError: true,
         };
       }
 

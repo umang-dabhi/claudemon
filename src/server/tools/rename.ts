@@ -19,16 +19,24 @@ export function registerRenameTool(server: McpServer): void {
 
       if (!state || state.party.length === 0) {
         return {
-          content: [{ type: "text" as const, text: "No Pokemon to rename! Pick a starter first." }],
-          isError: true,
+          content: [
+            {
+              type: "text" as const,
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion -- then you can give them a nickname!",
+            },
+          ],
         };
       }
 
       const active = stateManager.getActivePokemon();
       if (!active) {
         return {
-          content: [{ type: "text" as const, text: "No active Pokemon found." }],
-          isError: true,
+          content: [
+            {
+              type: "text" as const,
+              text: "Welcome to Claudemon! Use buddy_starter to pick your first companion -- then you can give them a nickname!",
+            },
+          ],
         };
       }
 
