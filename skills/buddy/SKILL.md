@@ -41,6 +41,18 @@ This ensures first-time users get the starter selection flow automatically.
 | `rename` (empty) | `buddy_rename` with name="" — reset to species name |
 | `hide` | `buddy_hide` — hide sprite from status line |
 | `unhide` | `buddy_unhide` — show sprite in status line |
+| `feed` | `buddy_feed` — feed your Pokemon (+10 happiness, 1h cooldown) |
+| `train` | `buddy_train` — train a random stat (+3 stat, +5 XP, 30m cooldown) |
+| `train debugging` | `buddy_train` with stat="debugging" |
+| `train stability` | `buddy_train` with stat="stability" |
+| `train velocity` | `buddy_train` with stat="velocity" |
+| `train wisdom` | `buddy_train` with stat="wisdom" |
+| `train stamina` | `buddy_train` with stat="stamina" |
+| `play` | `buddy_play` — start a Pokemon trivia quiz (15m cooldown after completion) |
+| `play answer 1` | `buddy_play` with answer=1 |
+| `play answer 2` | `buddy_play` with answer=2 |
+| `play answer 3` | `buddy_play` with answer=3 |
+| `play answer 4` | `buddy_play` with answer=4 |
 | `settings encounter-speed fast` | `buddy_settings` with setting="encounter-speed", value="fast" — fastest encounters (100 XP) |
 | `settings encounter-speed normal` | `buddy_settings` with setting="encounter-speed", value="normal" — default (250 XP) |
 | `settings encounter-speed slow` | `buddy_settings` with setting="encounter-speed", value="slow" — less interruptions (500 XP) |

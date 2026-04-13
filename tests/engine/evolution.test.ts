@@ -82,6 +82,10 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
     lastEncounterTime: 0,
     mood: "neutral" as const,
     moodSetAt: 0,
+    lastFedAt: 0,
+    lastTrainedAt: 0,
+    lastPlayedAt: 0,
+    pendingQuiz: null,
     ...overrides,
   };
 }

@@ -168,6 +168,10 @@ export interface PlayerState {
   lastEncounterTime: number; // Timestamp of last encounter (for cooldown)
   mood: MoodType; // Current mood of the active Pokemon
   moodSetAt: number; // Timestamp when mood was last set
+  lastFedAt: number; // Timestamp of last feed action
+  lastTrainedAt: number; // Timestamp of last train action
+  lastPlayedAt: number; // Timestamp of last play (quiz completed) action
+  pendingQuiz: PendingQuiz | null; // Active quiz awaiting answer
 }
 
 // ── Pokedex ────────────────────────────────────────────────
@@ -277,6 +281,15 @@ export interface XpEvent {
   readonly xp: number;
   readonly statBoost: CodingStat | null;
   readonly boostAmount: number;
+}
+
+// ── Pending Quiz (for /buddy play) ────────────────────────
+
+export interface PendingQuiz {
+  readonly type: "type_matchup" | "stat_compare" | "evolution" | "pokedex_trivia";
+  readonly question: string;
+  readonly options: readonly string[];
+  readonly correctAnswer: number; // 1-4
 }
 
 // ── Encounters ─────────────────────────────────────────────

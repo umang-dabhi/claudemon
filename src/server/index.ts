@@ -20,6 +20,9 @@ import { registerLegendaryTool } from "./tools/legendary.js";
 import { registerHideTool, registerUnhideTool } from "./tools/visibility.js";
 import { registerRenameTool } from "./tools/rename.js";
 import { registerSettingsTool } from "./tools/settings.js";
+import { registerFeedTool } from "./tools/feed.js";
+import { registerTrainTool } from "./tools/train.js";
+import { registerPlayTool } from "./tools/play.js";
 import { buildInstructions } from "./instructions.js";
 
 /** Safely register a tool, logging to stderr on failure instead of crashing. */
@@ -67,6 +70,9 @@ async function main(): Promise<void> {
   safeRegister("buddy_unhide", registerUnhideTool, server);
   safeRegister("buddy_rename", registerRenameTool, server);
   safeRegister("buddy_settings", registerSettingsTool, server);
+  safeRegister("buddy_feed", registerFeedTool, server);
+  safeRegister("buddy_train", registerTrainTool, server);
+  safeRegister("buddy_play", registerPlayTool, server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();
