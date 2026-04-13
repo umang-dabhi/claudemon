@@ -16,7 +16,7 @@ export const LEGENDARY_QUESTS: readonly LegendaryQuest[] = [
     name: "The Ice Bird of Endurance",
     steps: [
       {
-        description: "Maintain a 30-day coding streak",
+        description: "Code for 30 days (weekends off OK)",
         condition: { type: "streak", minDays: 30 },
       },
       {
@@ -25,7 +25,7 @@ export const LEGENDARY_QUESTS: readonly LegendaryQuest[] = [
         condition: { type: "pokedex", minCaught: 3 },
       },
       {
-        description: "Maintain a 100-day coding streak",
+        description: "Code for 100 days (weekends off OK)",
         condition: { type: "streak", minDays: 100 },
       },
       {
@@ -113,7 +113,7 @@ export const LEGENDARY_QUESTS: readonly LegendaryQuest[] = [
     name: "The Myth",
     steps: [
       {
-        description: "Maintain a 100-day coding streak",
+        description: "Code for 100 days (weekends off OK)",
         condition: { type: "streak", minDays: 100 },
       },
       {
@@ -129,7 +129,7 @@ export const LEGENDARY_QUESTS: readonly LegendaryQuest[] = [
         condition: { type: "pokedex", minCaught: 149 },
       },
       {
-        description: "Maintain a 365-day coding streak",
+        description: "Code for 365 days (weekends off OK)",
         condition: { type: "streak", minDays: 365 },
       },
     ],

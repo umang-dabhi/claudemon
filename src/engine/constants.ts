@@ -101,7 +101,7 @@ export const BADGES: readonly Badge[] = [
   {
     type: "lunar",
     name: "Lunar Badge",
-    description: "Maintain a 30-day coding streak — unlocks Moon Stone evolutions",
+    description: "Code for 30 days (weekends off OK) — unlocks Moon Stone evolutions",
     condition: { type: "streak", minDays: 30 },
   },
   {
