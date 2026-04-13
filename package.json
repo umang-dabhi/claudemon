@@ -1,5 +1,5 @@
 {
-  "name": "claudemon",
+  "name": "@umang-boss/claudemon",
   "version": "1.0.0",
   "description": "Pokemon Gen 1 coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
