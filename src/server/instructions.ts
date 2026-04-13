@@ -9,6 +9,7 @@ import { POKEMON_BY_ID } from "../engine/pokemon-data.js";
 import { cumulativeXpForLevel } from "../engine/xp.js";
 import { getEvolutionLinks } from "../engine/evolution.js";
 import { getTypePersonality } from "../engine/reactions.js";
+import { getMoodDescription } from "../engine/mood.js";
 
 // ── Public API ──────────────────────────────────────────────
 
@@ -60,11 +61,17 @@ function buildActiveInstructions(
   const evolutionNote = buildEvolutionNote(active, species);
   const encounterNote = buildEncounterNote(state);
 
+  const currentMood = state.mood ?? "neutral";
+  const moodDesc = getMoodDescription(currentMood);
+  const moodHint = buildMoodHint(currentMood);
+
   const lines: string[] = [
     "You have a Claudemon Pokemon companion.",
     "",
     `Active Pokemon: ${displayName}, Level ${active.level}, ${typeStr} type.`,
     `Personality: ${personality}`,
+    `Current mood: ${moodDesc.toLowerCase()}${moodHint}`,
+    "Adjust your buddy references to match the mood.",
     "",
     `Occasionally (not every message), naturally reference ${displayName}:`,
     `- When an error occurs: ${displayName} reacts (use ${primaryType} type personality)`,
@@ -94,6 +101,24 @@ function buildActiveInstructions(
 }
 
 // ── Helper Functions ────────────────────────────────────────
+
+/** Build a short contextual hint for the current mood. */
+function buildMoodHint(mood: string): string {
+  switch (mood) {
+    case "happy":
+      return " (tests passing, feeling good)";
+    case "worried":
+      return " (errors detected, feeling anxious)";
+    case "sleepy":
+      return " (late night coding, very drowsy)";
+    case "energetic":
+      return " (morning energy, fired up!)";
+    case "proud":
+      return " (just accomplished something big!)";
+    default:
+      return " (calm, waiting for action)";
+  }
+}
 
 /** Find the active Pokemon in the player's party. */
 function findActivePokemon(state: PlayerState): OwnedPokemon | null {

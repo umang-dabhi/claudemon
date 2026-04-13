@@ -24,6 +24,7 @@ import {
   getTimeOfDayBias,
 } from "../engine/encounters.js";
 import type { EncounterContext } from "../engine/encounters.js";
+import { calculateMood } from "../engine/mood.js";
 
 const MAX_RECENT_TOOL_TYPES = 20;
 
@@ -170,6 +171,23 @@ if (!encounterTriggered && !state.pendingEncounter && shouldDiversityBonus(state
     state.recentToolTypes = [];
     encounterTriggered = true;
   }
+}
+
+// Calculate mood based on the event that just happened
+const newMood = calculateMood(
+  eventType,
+  state.counters,
+  currentHour,
+  state.mood ?? "neutral",
+  state.moodSetAt ?? 0,
+  evolutionReady, // evolution ready counts as a proud trigger
+  false, // achievements are checked in catch/evolve tools
+  false, // catches are handled in the catch tool
+);
+
+if (newMood !== (state.mood ?? "neutral")) {
+  state.mood = newMood;
+  state.moodSetAt = Date.now();
 }
 
 // Single atomic save for all mutations

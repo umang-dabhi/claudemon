@@ -248,6 +248,10 @@ export function registerCatchTool(server: McpServer): void {
         state.achievements.push(unlockAchievement(achievement.id));
       }
 
+      // Set mood to proud after a successful catch
+      state.mood = "proud";
+      state.moodSetAt = Date.now();
+
       // Save state
       await stateManager.save();
       await stateManager.writeStatus();

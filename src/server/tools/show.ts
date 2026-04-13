@@ -13,6 +13,7 @@ import { STAT_DISPLAY_NAMES } from "../../engine/constants.js";
 import { renderStatBar, getTrainerTitle } from "../../engine/stats.js";
 import { xpProgressPercent, xpToNextLevel } from "../../engine/xp.js";
 import { StateManager } from "../../state/state-manager.js";
+import { getMoodEmoji, getMoodDescription } from "../../engine/mood.js";
 import { formatTypes, renderXpBar, pad } from "./display-helpers.js";
 
 /** Registers the buddy_show tool on the MCP server. */
@@ -122,6 +123,12 @@ export function registerShowTool(server: McpServer): void {
           ? `Streak: ${state.streak.currentStreak} days`
           : "Streak: 0 days";
       lines.push(`\u2502  ${pad(streakDisplay, W - 2)}\u2502`);
+
+      const currentMood = state.mood ?? "neutral";
+      const moodEmoji = getMoodEmoji(currentMood);
+      const moodDesc = getMoodDescription(currentMood);
+      lines.push(`\u2502  ${pad(`Mood: ${moodEmoji} ${moodDesc}`, W - 2)}\u2502`);
+
       lines.push(`\u2514${border}\u2518`);
 
       // Prepend colorscript sprite if available

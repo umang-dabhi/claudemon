@@ -197,6 +197,10 @@ export function registerEvolveTool(server: McpServer): void {
       // Confirm mode: apply evolution
       const { newName, newTypes } = applyEvolution(active, eligibleLink.to);
 
+      // Set mood to proud after evolution
+      state.mood = "proud";
+      state.moodSetAt = Date.now();
+
       // Save state
       await stateManager.save();
       await stateManager.writeStatus();

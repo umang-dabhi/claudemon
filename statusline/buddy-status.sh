@@ -56,6 +56,7 @@ SPECIES_ID=$(echo "$STATUS" | jq -r '.speciesId // 0')
 EVOLVING=$(echo "$STATUS" | jq -r '.evolutionReady // false')
 REACTION=$(echo "$STATUS" | jq -r '.reaction // empty')
 ENCOUNTER=$(echo "$STATUS" | jq -r '.encounter // empty')
+MOOD=$(echo "$STATUS" | jq -r '.mood // "neutral"')
 
 # ── Colors ──────────────────────────────────────────────────
 NC=$'\033[0m'
@@ -158,69 +159,83 @@ if [ -n "$ENCOUNTER" ]; then
 elif [ -n "$REACTION" ]; then
   SPEECH="$REACTION"
 else
+  # Mood-based speeches — pick from mood-specific arrays
   NOW=$(date +%s)
-  IDX=$(( (NOW / 30) % 60 ))
-  SPEECHES=(
-    "*${NAME} looks at your code curiously*"
-    ""
-    "*${NAME} nods along as you type*"
-    ""
-    "*${NAME} is watching closely*"
-    ""
-    "*${NAME} hums softly*"
-    ""
-    "*${NAME} stretches and yawns*"
-    ""
-    "*${NAME} bounces excitedly*"
-    ""
-    "*${NAME} waits patiently*"
-    ""
-    "*${NAME} tilts head at the screen*"
-    ""
-    "*${NAME} chirps encouragingly*"
-    ""
-    "*${NAME} peers at a variable name*"
-    ""
-    "*${NAME} sniffs at a function*"
-    ""
-    "*${NAME} sits on the keyboard*"
-    ""
-    "*${NAME} chases the cursor*"
-    ""
-    "*${NAME} judges your indentation*"
-    ""
-    "*${NAME} found a semicolon!*"
-    ""
-    "*${NAME} debugs alongside you*"
-    ""
-    "*${NAME} spots a typo... maybe*"
-    ""
-    "*${NAME} celebrates a clean build*"
-    ""
-    "*${NAME} is impressed by that refactor*"
-    ""
-    "*${NAME} blinks at the test results*"
-    ""
-    "*${NAME} dreams of evolution*"
-    ""
-    "*${NAME} wants to learn new moves*"
-    ""
-    "*${NAME} is proud of your progress*"
-    ""
-    "*${NAME} snoozes between commits*"
-    ""
-    "*${NAME} practices its type moves*"
-    ""
-    "*${NAME} stares at the linter output*"
-    ""
-    "*${NAME} wonders about that TODO*"
-    ""
-    "*${NAME} approves of that commit msg*"
-    ""
-    "*${NAME} is ready for action!*"
-    ""
-  )
-  SPEECH="${SPEECHES[$IDX]}"
+
+  case "$MOOD" in
+    happy)
+      MOOD_SPEECHES=(
+        "*${NAME} is beaming with pride!*"
+        "*${NAME} does a little victory dance*"
+        "*${NAME} radiates positive energy*"
+        "*${NAME} bounces happily*"
+        "*${NAME} gives you a thumbs up*"
+      )
+      ;;
+    worried)
+      MOOD_SPEECHES=(
+        "*${NAME} looks concerned...*"
+        "*${NAME} nervously watches the errors*"
+        "*${NAME} hides behind the terminal*"
+        "*${NAME} paces back and forth*"
+        "*${NAME} offers you a virtual hug*"
+      )
+      ;;
+    sleepy)
+      MOOD_SPEECHES=(
+        "*${NAME} yawns widely*"
+        "*${NAME} dozes off... zzz*"
+        "*${NAME} rubs its eyes*"
+        "*${NAME} curls up near the keyboard*"
+        "*${NAME} mumbles in its sleep*"
+      )
+      ;;
+    energetic)
+      MOOD_SPEECHES=(
+        "*${NAME} is fired up! Let's go!*"
+        "*${NAME} bounces off the walls*"
+        "*${NAME} can't sit still!*"
+        "*${NAME} is ready to code all day!*"
+        "*${NAME} stretches and flexes*"
+      )
+      ;;
+    proud)
+      MOOD_SPEECHES=(
+        "*${NAME} puffs up with pride*"
+        "*${NAME} strikes a victory pose*"
+        "*${NAME} shows off to everyone*"
+        "*${NAME} earned bragging rights!*"
+        "*${NAME} stands tall and proud*"
+      )
+      ;;
+    *)
+      # neutral / default — use the original idle speeches
+      MOOD_SPEECHES=(
+        "*${NAME} looks at your code curiously*"
+        "*${NAME} nods along as you type*"
+        "*${NAME} is watching closely*"
+        "*${NAME} hums softly*"
+        "*${NAME} waits patiently*"
+        "*${NAME} tilts head at the screen*"
+        "*${NAME} chirps encouragingly*"
+        "*${NAME} peers at a variable name*"
+        "*${NAME} sniffs at a function*"
+        "*${NAME} sits on the keyboard*"
+        "*${NAME} chases the cursor*"
+        "*${NAME} judges your indentation*"
+        "*${NAME} found a semicolon!*"
+        "*${NAME} debugs alongside you*"
+        "*${NAME} spots a typo... maybe*"
+        "*${NAME} celebrates a clean build*"
+        "*${NAME} dreams of evolution*"
+        "*${NAME} is ready for action!*"
+      )
+      ;;
+  esac
+
+  MOOD_COUNT=${#MOOD_SPEECHES[@]}
+  IDX=$(( (NOW / 30) % MOOD_COUNT ))
+  SPEECH="${MOOD_SPEECHES[$IDX]}"
 fi
 if [ -n "$ENCOUNTER" ]; then
   # Bright yellow for encounter alerts

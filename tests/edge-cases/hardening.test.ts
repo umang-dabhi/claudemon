@@ -109,6 +109,8 @@ function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
     xpSinceLastEncounter: 0,
     recentToolTypes: [],
     lastEncounterTime: 0,
+    mood: "neutral" as const,
+    moodSetAt: 0,
     ...overrides,
   };
 }

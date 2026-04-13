@@ -3,6 +3,11 @@
  * Single source of truth for all shared interfaces and types.
  */
 
+// ── Mood Types ────────────────────────────────────────────
+
+export const MOOD_TYPES = ["happy", "worried", "sleepy", "energetic", "proud", "neutral"] as const;
+export type MoodType = (typeof MOOD_TYPES)[number];
+
 // ── Pokemon Types ──────────────────────────────────────────
 
 export const POKEMON_TYPES = [
@@ -161,6 +166,8 @@ export interface PlayerState {
   xpSinceLastEncounter: number;
   recentToolTypes: string[]; // Track tool diversity for bonus encounters
   lastEncounterTime: number; // Timestamp of last encounter (for cooldown)
+  mood: MoodType; // Current mood of the active Pokemon
+  moodSetAt: number; // Timestamp when mood was last set
 }
 
 // ── Pokedex ────────────────────────────────────────────────
