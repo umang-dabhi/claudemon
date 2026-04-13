@@ -36,20 +36,60 @@ function seededShuffle<T>(array: readonly T[], seed: number): T[] {
   return result;
 }
 
-/** Get today's date string in YYYY-MM-DD for daily seed. */
-function todayString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+/** Path to stored starter options */
+function getStarterOptionsPath(): string {
+  return `${process.env["HOME"] ?? "~"}/.claudemon/starter-options.json`;
 }
 
-/** Generate today's 3 starter options (deterministic per day). */
-function getDailyStarters(): number[] {
-  const seed = hashString(`claudemon-starter-${todayString()}`);
+/** Get or generate 3 random starters. Stored for 24 hours so user sees same 3. */
+async function getStarters(): Promise<number[]> {
+  const optionsPath = getStarterOptionsPath();
+
+  // Try to load previously generated options (valid for 24 hours)
+  try {
+    const { readFile, stat, access: fsAccess } = await import("node:fs/promises");
+    const { constants } = await import("node:fs");
+    await fsAccess(optionsPath, constants.F_OK);
+    const fileStat = await stat(optionsPath);
+    const ageMs = Date.now() - fileStat.mtimeMs;
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+
+    if (ageMs < ONE_DAY) {
+      const text = await readFile(optionsPath, "utf-8");
+      const saved = JSON.parse(text) as number[];
+      if (Array.isArray(saved) && saved.length === 3) {
+        return saved;
+      }
+    }
+  } catch {
+    // No saved options or expired — generate new ones
+  }
+
+  // Generate fresh random 3
+  const seed = hashString(`claudemon-${Date.now()}-${Math.random()}`);
   const shuffled = seededShuffle(STARTER_POOL, seed);
-  return [shuffled[0]!, shuffled[1]!, shuffled[2]!];
+  const starters = [shuffled[0]!, shuffled[1]!, shuffled[2]!];
+
+  // Save for consistency until they pick
+  try {
+    const { writeFile, mkdir } = await import("node:fs/promises");
+    await mkdir(`${process.env["HOME"] ?? "~"}/.claudemon`, { recursive: true });
+    await writeFile(optionsPath, JSON.stringify(starters), "utf-8");
+  } catch {
+    // Non-critical — they'll just get new options next time
+  }
+
+  return starters;
+}
+
+/** Clear saved starter options (called after picking) */
+async function clearStarterOptions(): Promise<void> {
+  try {
+    const { unlink } = await import("node:fs/promises");
+    await unlink(getStarterOptionsPath());
+  } catch {
+    // Ignore
+  }
 }
 
 /** Generate a UUID v4. */
@@ -80,7 +120,7 @@ export function registerStarterTool(server: McpServer): void {
         };
       }
 
-      const starterIds = getDailyStarters();
+      const starterIds = await getStarters();
 
       // No choice provided — show the 3 options
       if (params.choice === undefined) {
@@ -149,6 +189,7 @@ export function registerStarterTool(server: McpServer): void {
       const trainerName = "Trainer";
       await stateManager.initializePlayer(trainerId, trainerName, starter);
       await stateManager.writeStatus();
+      await clearStarterOptions();
 
       const lines: string[] = [];
 
