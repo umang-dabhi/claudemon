@@ -42,13 +42,20 @@ async function checkPrerequisites(): Promise<boolean> {
   let allGood = true;
 
   try {
-    const result = spawnSync("bun", ["--version"], { stdio: "pipe" });
-    if (result.error) throw result.error;
-    const output = result.stdout?.toString().trim();
-    ok(`Bun runtime: v${output}`);
+    const bunResult = spawnSync("bun", ["--version"], { stdio: "pipe" });
+    if (!bunResult.error) {
+      ok(`Bun runtime: v${bunResult.stdout?.toString().trim()} (fast mode)`);
+    } else {
+      throw new Error("no bun");
+    }
   } catch {
-    fail("Bun runtime not found.");
-    allGood = false;
+    const nodeResult = spawnSync("node", ["--version"], { stdio: "pipe" });
+    if (!nodeResult.error) {
+      ok(`Node.js runtime: ${nodeResult.stdout?.toString().trim()}`);
+    } else {
+      fail("No runtime found. Install Node.js 18+");
+      allGood = false;
+    }
   }
 
   try {

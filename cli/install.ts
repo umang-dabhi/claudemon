@@ -34,15 +34,22 @@ import {
 async function checkPrerequisites(): Promise<boolean> {
   let allGood = true;
 
-  // Check bun (sanity)
+  // Check runtime (bun preferred, node works too)
   try {
-    const result = spawnSync("bun", ["--version"], { stdio: "pipe" });
-    if (result.error) throw result.error;
-    const output = result.stdout?.toString().trim();
-    ok(`Bun runtime: v${output}`);
+    const bunResult = spawnSync("bun", ["--version"], { stdio: "pipe" });
+    if (!bunResult.error) {
+      ok(`Bun runtime: v${bunResult.stdout?.toString().trim()} (fast mode)`);
+    } else {
+      throw new Error("no bun");
+    }
   } catch {
-    fail("Bun runtime not found. Install from https://bun.sh");
-    allGood = false;
+    const nodeResult = spawnSync("node", ["--version"], { stdio: "pipe" });
+    if (!nodeResult.error) {
+      ok(`Node.js runtime: ${nodeResult.stdout?.toString().trim()}`);
+    } else {
+      fail("No runtime found. Install Node.js 18+ from https://nodejs.org");
+      allGood = false;
+    }
   }
 
   // Check Claude Code directory
