@@ -1,6 +1,6 @@
 # Claudemon
 
-> Pokemon Gen 1 coding companion for Claude Code -- Gotta code 'em all!
+> Pokemon coding companion for Claude Code -- Gotta code 'em all!
 
 ## What is Claudemon?
 
@@ -10,7 +10,7 @@ fill your Pokedex -- all while you code.
 
 ## Features
 
-- **151 Gen 1 Pokemon** with authentic base stats and evolution chains
+- **151 Pokemon** with authentic base stats and evolution chains
 - **XP from coding** -- commits, tests, builds, edits, and more
 - **Level up & evolve** -- Charmander -> Charmeleon -> Charizard
 - **Wild encounters** -- Pokemon appear based on your coding activity
@@ -90,7 +90,7 @@ Claude Code -> MCP Server (Claudemon)
 
 ### Evolution
 
-Pokemon evolve at the same levels as the original Gen 1 games:
+Pokemon evolve at the same levels as the original games:
 - **Level-based:** Charmander -> Charmeleon (L16) -> Charizard (L36)
 - **Badge-based:** Pikachu -> Raichu (Spark Badge -- 200 commits)
 - **Collaboration:** Kadabra -> Alakazam (10 PRs merged)

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+echo "Running pre-commit checks..."
+
+# 1. Format check
+echo "  Checking formatting..."
+npx prettier --check "src/**/*.ts" "cli/**/*.ts" "scripts/**/*.ts" --ignore-unknown || {
+  echo "  ✗ Format check failed. Run: bun run format"
+  exit 1
+}
+echo "  ✓ Format OK"
+
+# 2. Typecheck
+echo "  Running typecheck..."
+npx tsc --noEmit || {
+  echo "  ✗ Typecheck failed."
+  exit 1
+}
+echo "  ✓ Typecheck OK"
+
+# 3. Build
+echo "  Building dist/..."
+npx tsc -p tsconfig.build.json || {
+  echo "  ✗ Build failed."
+  exit 1
+}
+echo "  ✓ Build OK"
+
+echo "All pre-commit checks passed!"
