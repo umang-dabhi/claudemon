@@ -192,10 +192,9 @@ RIGHT_MARGIN=4
 RIGHT_PAD=$(( COLS - ART_W - RIGHT_MARGIN ))
 [ "$RIGHT_PAD" -lt 0 ] && RIGHT_PAD=0
 
-# Build left array — line 1: model+context, line 2: buddy speech, rest empty
+# Build left array — line 1: model+context, rest empty
 LEFT_LINES=()
 LEFT_LINES+=("$LEFT_1")  # line 1: model · context
-LEFT_LINES+=("$LEFT_3")  # line 2: buddy speech
 
 # Pad rest with empty lines
 while [ ${#LEFT_LINES[@]} -lt "$TOTAL_LINES" ]; do
@@ -207,8 +206,19 @@ LEFT_COUNT=${#LEFT_LINES[@]}
 FULL_SPACER=""
 for (( s=0; s<RIGHT_PAD; s++ )); do FULL_SPACER+="$B"; done
 
-# ── Output name line ABOVE sprite ────────────────────────────
-echo "${FULL_SPACER}${INFO_LINE}"
+# ── Output name line ABOVE sprite — with speech before name ──
+SPEECH_TEXT=""
+SPEECH_VISIBLE_W=0
+if [ -n "$SPEECH" ]; then
+  SPEECH_TEXT="${SPEECH_COLOR}${SPEECH}${NC}  "
+  SPEECH_VISIBLE_W=$(( ${#SPEECH} + 2 ))
+fi
+
+NAME_PAD=$(( RIGHT_PAD - SPEECH_VISIBLE_W ))
+[ "$NAME_PAD" -lt 0 ] && NAME_PAD=0
+NAME_SPACER=""
+for (( s=0; s<NAME_PAD; s++ )); do NAME_SPACER+="$B"; done
+echo "${NAME_SPACER}${SPEECH_TEXT}${INFO_LINE}"
 
 # ── Output sprite lines (right-aligned, left content merged) ──
 for (( i=0; i<SPRITE_COUNT; i++ )); do
