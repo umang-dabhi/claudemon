@@ -15,41 +15,62 @@ fill your Pokedex -- all while you code.
 - **Level up & evolve** -- Charmander -> Charmeleon -> Charizard
 - **Wild encounters** -- Pokemon appear based on your coding activity
 - **Catch 'em all** -- fill your 151-entry Pokedex
-- **Achievements** -- 18 milestones to unlock
+- **Achievements** -- 17 milestones to unlock
 - **Legendary quests** -- multi-step challenges for Articuno, Zapdos, Moltres, Mewtwo, Mew
 - **Colored terminal sprites** -- hand-crafted pixel art in your terminal
+- **Status line** -- sprite + name + model + buddy speech on the prompt line
 - **Type personalities** -- 15 unique reaction styles
+- **Nickname your Pokemon** -- give them custom names
 
-## Quick Start
+## Install
 
 ```bash
-# Install
-bun run cli/install.ts
-
-# Start a new Claude Code session, then:
-/buddy              # Pick your starter
-/buddy show         # See your Pokemon
-/buddy pet          # Bond with your companion
-/buddy stats        # Detailed stats
-/buddy evolve       # Check evolution status
-/buddy catch        # Catch wild Pokemon
-/buddy party        # Manage your party
-/buddy pokedex      # Track your collection
-/buddy achievements # View progress
-/buddy legendary    # Legendary quest chains
+npx @umang-boss/claudemon install
 ```
+
+That's it! Start a new Claude Code session and type `/buddy`.
+
+**Requirements:** Node.js 18+ (Bun optional, auto-detected for faster startup)
+
+### Other CLI Commands
+
+```bash
+npx @umang-boss/claudemon doctor     # Check installation health
+npx @umang-boss/claudemon update     # Re-register after updates
+npx @umang-boss/claudemon uninstall  # Remove (preserves save data)
+```
+
+## Commands
+
+Once installed, use `/buddy` in Claude Code:
+
+| Command | What it does |
+|---------|-------------|
+| `/buddy` | Show your Pokemon |
+| `/buddy pet` | Bond with your buddy (+XP, +happiness) |
+| `/buddy stats` | Detailed stat breakdown |
+| `/buddy rename Sparky` | Give a nickname |
+| `/buddy rename` | Reset to species name |
+| `/buddy evolve` | Check/trigger evolution |
+| `/buddy catch` | Catch wild Pokemon |
+| `/buddy catch confirm` | Throw a Pokeball! |
+| `/buddy party` | View party (6 max) |
+| `/buddy switch 2` | Switch active Pokemon |
+| `/buddy pokedex` | Track your 151 collection |
+| `/buddy achievements` | View progress |
+| `/buddy legendary` | Legendary quest chains |
+| `/buddy hide` | Hide sprite from status line |
+| `/buddy unhide` | Show sprite |
 
 ## How It Works
 
 Claudemon runs as an MCP (Model Context Protocol) server alongside Claude Code.
 It uses hooks to detect your coding activity and award XP automatically.
 
-### Architecture
-
 ```
 Claude Code -> MCP Server (Claudemon)
            -> Hooks (PostToolUse, Stop, UserPromptSubmit)
-           -> Status Line (name + level + XP bar)
+           -> Status Line (sprite + name + model + speech)
            -> /buddy Skill (slash commands)
 ```
 
@@ -70,10 +91,10 @@ Claude Code -> MCP Server (Claudemon)
 ### Evolution
 
 Pokemon evolve at the same levels as the original Gen 1 games:
-- Level-based: Charmander -> Charmeleon (L16) -> Charizard (L36)
-- Badge-based: Pikachu -> Raichu (Spark Badge -- 200 commits)
-- Collaboration: Kadabra -> Alakazam (10 PRs merged)
-- Stat-based: Eevee -> Flareon/Vaporeon/Jolteon (dominant coding stat)
+- **Level-based:** Charmander -> Charmeleon (L16) -> Charizard (L36)
+- **Badge-based:** Pikachu -> Raichu (Spark Badge -- 200 commits)
+- **Collaboration:** Kadabra -> Alakazam (10 PRs merged)
+- **Stat-based:** Eevee -> Flareon/Vaporeon/Jolteon (dominant coding stat)
 
 ### Badges
 
@@ -85,73 +106,66 @@ Pokemon evolve at the same levels as the original Gen 1 games:
 | Lunar Badge | 30-day streak | Moon Stone evolutions |
 | Growth Badge | Edit 500 files | Leaf Stone evolutions |
 
-### Trainer Titles
+### Wild Encounters
 
-Your title progresses as your Pokemon levels up:
+As you code, wild Pokemon appear based on your activity:
+- Fixing bugs -> Bug/Poison types
+- Writing tests -> Fighting/Normal types
+- Large refactors -> Psychic/Dragon types
+- Build/compile -> Fire/Rock types
 
-| Level | Title |
-|-------|-------|
-| 1 | Bug Catcher |
-| 6 | Youngster |
-| 11 | Hiker |
-| 21 | Ace Trainer |
-| 31 | Cooltrainer |
-| 41 | Veteran |
-| 51 | Elite Four |
-| 61 | Champion |
-| 76 | Pokemon Master |
-| 91 | Professor |
+Encounters trigger roughly every 500 XP earned. Use `/buddy catch` to try catching them!
 
-## CLI Tools
+### Legendary Quests
 
-```bash
-# Install Claudemon into Claude Code
-bun run cli/install.ts
+5 multi-step quest chains for legendary Pokemon:
+- **Articuno** -- The Ice Bird of Endurance (100-day streak)
+- **Zapdos** -- The Thunder of Testing (1000 tests passed)
+- **Moltres** -- The Flame of Debugging (500 bugs fixed)
+- **Mewtwo** -- The Ultimate Creation (140 Pokedex entries)
+- **Mew** -- The Myth (365-day coding streak)
 
-# Uninstall (preserves your save data)
-bun run cli/uninstall.ts
+## Status Line
 
-# Diagnose installation issues
-bun run cli/doctor.ts
+The status line shows your Pokemon sprite on the right side of the input prompt:
+
 ```
+*Pikachu hums softly*  Pikachu Lv.10
+Opus 4.6                [colored sprite]
+                        [colored sprite]
+                        [colored sprite]
+```
+
+- Buddy speech rotates every 30 seconds (zero API cost -- hardcoded messages)
+- Model name from Claude Code
+- `/buddy hide` to toggle sprite visibility
 
 ## Development
 
 ```bash
-# Run the MCP server directly
-bun run server
+# Clone and install
+git clone https://github.com/umang-dabhi/claudemon.git
+cd claudemon
+bun install
 
-# Run tests
+# Run tests (309 tests)
 bun test
 
 # Type checking
 bun run typecheck
 
-# Format code
+# Format
 bun run format
-```
 
-### Project Structure
-
-```
-src/
-  engine/          # Game logic: XP, evolution, encounters, stats
-  gamification/    # Achievements, milestones, legendary quests
-  server/          # MCP server and tool handlers
-  sprites/         # Terminal sprite rendering
-  state/           # Save state management
-cli/               # Install, uninstall, doctor scripts
-hooks/             # PostToolUse, Stop, UserPromptSubmit shell scripts
-skills/buddy/      # /buddy slash command definition
-sprites/full/      # 151 colored terminal sprite files
-statusline/        # Status bar shell script
-tests/             # Test suites
+# Build for npm (compiles TS to JS)
+npm run build
 ```
 
 ## Requirements
 
-- [Claude Code](https://claude.ai/code) v2.1.80+
-- [Bun](https://bun.sh) v1.0+
+- [Claude Code](https://claude.ai/code)
+- Node.js 18+ (or [Bun](https://bun.sh) for faster startup)
+- `jq` for status line (`sudo apt install jq` on Ubuntu)
 
 ## Disclaimer
 
