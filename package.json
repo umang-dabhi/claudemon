@@ -1,0 +1,40 @@
+{
+  "name": "claudemon",
+  "version": "0.1.0",
+  "description": "Pokemon Gen 1 coding companion for Claude Code — Gotta code 'em all!",
+  "type": "module",
+  "main": "src/server/index.ts",
+  "bin": {
+    "claudemon": "cli/index.ts"
+  },
+  "scripts": {
+    "server": "bun run src/server/index.ts",
+    "install-buddy": "bun run cli/install.ts",
+    "uninstall-buddy": "bun run cli/uninstall.ts",
+    "doctor": "bun run cli/doctor.ts",
+    "update-buddy": "bun run cli/update.ts",
+    "download-sprites": "bun run scripts/download-colorscripts.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\" \"cli/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\" --ignore-unknown",
+    "format:check": "prettier --check \"src/**/*.ts\" \"cli/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\" --ignore-unknown"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.25.23"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.8.2",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "claude-code",
+    "mcp",
+    "pokemon",
+    "coding-companion",
+    "gamification"
+  ],
+  "author": "Umang Dabhi",
+  "license": "MIT"
+}

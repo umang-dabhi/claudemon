@@ -1,0 +1,10 @@
+node_modules/
+dist/
+sprites/raw/
+sprites/full/
+sprites/mini/
+bun.lockb
+*.json
+!.prettierrc
+!package.json
+!tsconfig.json
