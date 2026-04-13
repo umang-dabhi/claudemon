@@ -1,9 +1,9 @@
 {
   "name": "@umang-boss/claudemon",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Pokemon coding companion for Claude Code — Gotta code 'em all!",
   "type": "module",
-  "main": "dist/src/server/index.js",
+  "main": "dist/server.mjs",
   "bin": {
     "claudemon": "bin/claudemon.js"
   },
@@ -22,9 +22,10 @@
   ],
   "scripts": {
     "prepare": "husky",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bun run scripts/build.ts",
+    "build:tsc": "tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
-    "server": "node dist/src/server/index.js",
+    "server": "node dist/server.mjs",
     "install-buddy": "node dist/cli/install.js",
     "uninstall-buddy": "node dist/cli/uninstall.js",
     "doctor": "node dist/cli/doctor.js",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "esbuild": "^0.28.0",
     "husky": "^9.1.7",
     "prettier": "^3.8.2",
     "typescript": "^5.8.3"

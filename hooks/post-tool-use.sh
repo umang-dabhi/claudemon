@@ -12,21 +12,30 @@ _claudemon_post_tool_use() {
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
   PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-  # Find runtime: prefer bun, fall back to node
+  # Find runtime and script paths
+  # Prefer bundled ESM (faster — no TS transpilation), fall back to bun+TS source
   RUNTIME=""
-  SCRIPTS_DIR=""
-  if [ -x "${HOME}/.bun/bin/bun" ]; then
+  AWARD_SCRIPT=""
+  COUNTER_SCRIPT=""
+
+  if [ -f "$PROJECT_DIR/dist/award-xp.mjs" ]; then
+    # Bundled ESM — use node (fastest)
+    RUNTIME="node"
+    AWARD_SCRIPT="$PROJECT_DIR/dist/award-xp.mjs"
+    COUNTER_SCRIPT="$PROJECT_DIR/dist/increment-counter.mjs"
+  elif [ -x "${HOME}/.bun/bin/bun" ]; then
     RUNTIME="${HOME}/.bun/bin/bun"
-    SCRIPTS_DIR="$PROJECT_DIR/src/hooks"
-    SCRIPT_EXT=".ts"
+    AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
+    COUNTER_SCRIPT="$PROJECT_DIR/src/hooks/increment-counter.ts"
   elif command -v bun >/dev/null 2>&1; then
     RUNTIME="bun"
-    SCRIPTS_DIR="$PROJECT_DIR/src/hooks"
-    SCRIPT_EXT=".ts"
+    AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
+    COUNTER_SCRIPT="$PROJECT_DIR/src/hooks/increment-counter.ts"
   elif command -v node >/dev/null 2>&1; then
     RUNTIME="node"
-    SCRIPTS_DIR="$PROJECT_DIR/dist/src/hooks"
-    SCRIPT_EXT=".js"
+    # Legacy tsc output
+    AWARD_SCRIPT="$PROJECT_DIR/dist/src/hooks/award-xp.js"
+    COUNTER_SCRIPT="$PROJECT_DIR/dist/src/hooks/increment-counter.js"
   else
     return 0
   fi
@@ -124,15 +133,15 @@ _claudemon_post_tool_use() {
     COUNTER="searches"
   fi
 
-  # ── Delegate to bun scripts ────────────────────────────────
-  # Use timeout to ensure bun never blocks beyond 3s (leaves 2s buffer for Claude Code's 5s limit)
+  # ── Delegate to scripts ─────────────────────────────────────
+  # Use timeout to ensure scripts never block beyond 3s (leaves 2s buffer for Claude Code's 5s limit)
 
   if [ -n "$EVENT" ]; then
     # XP award + counter increment
-    timeout 3 "$RUNTIME" "$SCRIPTS_DIR/award-xp${SCRIPT_EXT}" "$EVENT" "$COUNTER" 2>/dev/null &
+    timeout 3 "$RUNTIME" "$AWARD_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
   elif [ -n "$COUNTER" ]; then
     # Counter-only increment (no XP)
-    timeout 3 "$RUNTIME" "$SCRIPTS_DIR/increment-counter${SCRIPT_EXT}" "$EVENT" "$COUNTER" 2>/dev/null &
+    timeout 3 "$RUNTIME" "$COUNTER_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
   fi
 }
 

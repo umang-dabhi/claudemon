@@ -217,6 +217,9 @@ if (encounterTriggered && state.pendingEncounter) {
   await stateManager.writeStatus(evolutionReady);
 }
 
+// Flush any pending debounced status write before the process exits
+await stateManager.flushStatus();
+
 // Terminal bell on level-up, evolution available, or encounter (written to stderr so it reaches the terminal)
 if ((levelUp || evolutionReady || encounterTriggered) && state.config.bellEnabled) {
   process.stderr.write(BELL);

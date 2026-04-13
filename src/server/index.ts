@@ -24,6 +24,7 @@ import { registerFeedTool } from "./tools/feed.js";
 import { registerTrainTool } from "./tools/train.js";
 import { registerPlayTool } from "./tools/play.js";
 import { buildInstructions } from "./instructions.js";
+import { checkForUpdate } from "../engine/version-check.js";
 
 /** Safely register a tool, logging to stderr on failure instead of crashing. */
 function safeRegister(
@@ -77,6 +78,19 @@ async function main(): Promise<void> {
   // Connect via stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // Fire-and-forget version check — never blocks startup
+  checkForUpdate()
+    .then((result) => {
+      if (result?.hasUpdate) {
+        process.stderr.write(
+          `[claudemon] Update available: v${result.current} → v${result.latest}. Run: npm install -g @umang-boss/claudemon\n`,
+        );
+      }
+    })
+    .catch(() => {
+      /* silent — network failures are non-critical */
+    });
 }
 
 main().catch((error: unknown) => {

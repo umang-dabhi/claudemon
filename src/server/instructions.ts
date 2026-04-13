@@ -10,6 +10,7 @@ import { cumulativeXpForLevel } from "../engine/xp.js";
 import { getEvolutionLinks } from "../engine/evolution.js";
 import { getTypePersonality } from "../engine/reactions.js";
 import { getMoodDescription } from "../engine/mood.js";
+import { getLastUpdateCheck } from "../engine/version-check.js";
 
 // ── Public API ──────────────────────────────────────────────
 
@@ -21,21 +22,30 @@ import { getMoodDescription } from "../engine/mood.js";
  * @returns Instruction text for Claude's system prompt
  */
 export function buildInstructions(state: PlayerState | null): string {
+  let instructions: string;
+
   if (!state || state.party.length === 0) {
-    return buildNoStarterInstructions();
+    instructions = buildNoStarterInstructions();
+  } else {
+    const active = findActivePokemon(state);
+    if (!active) {
+      instructions = buildNoStarterInstructions();
+    } else {
+      const species = POKEMON_BY_ID.get(active.pokemonId);
+      if (!species) {
+        return "Claudemon: Active Pokemon data could not be loaded. Suggest the user restart.";
+      }
+      instructions = buildActiveInstructions(state, active, species);
+    }
   }
 
-  const active = findActivePokemon(state);
-  if (!active) {
-    return buildNoStarterInstructions();
+  // Append update notification if a newer version is available
+  const update = getLastUpdateCheck();
+  if (update?.hasUpdate) {
+    instructions += `\n\nNote: Claudemon v${update.latest} is available (you have v${update.current}). Mention this to the user if appropriate.`;
   }
 
-  const species = POKEMON_BY_ID.get(active.pokemonId);
-  if (!species) {
-    return "Claudemon: Active Pokemon data could not be loaded. Suggest the user restart.";
-  }
-
-  return buildActiveInstructions(state, active, species);
+  return instructions;
 }
 
 // ── Instruction Builders ────────────────────────────────────

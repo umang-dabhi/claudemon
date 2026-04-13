@@ -12,13 +12,21 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 
-// Try compiled JS first (dist/), then fall back to TS with bun
-const distCli = resolve(__dirname, "..", "dist", "cli", "index.js");
+// Try bundled ESM first, then old tsc output, then fall back to TS with bun
+const distCli = resolve(__dirname, "..", "dist", "cli.mjs");
+const distCliLegacy = resolve(__dirname, "..", "dist", "cli", "index.js");
 const srcCli = resolve(__dirname, "..", "cli", "index.ts");
 
 if (existsSync(distCli)) {
-  // Run compiled JS with node
+  // Run bundled ESM with node
   const result = spawnSync("node", [distCli, ...args], {
+    stdio: "inherit",
+    env: process.env,
+  });
+  process.exit(result.status ?? 1);
+} else if (existsSync(distCliLegacy)) {
+  // Run legacy tsc-compiled JS with node
+  const result = spawnSync("node", [distCliLegacy, ...args], {
     stdio: "inherit",
     env: process.env,
   });

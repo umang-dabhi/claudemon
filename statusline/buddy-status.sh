@@ -44,6 +44,20 @@ if [ -n "$STDIN_DATA" ]; then
   fi
 fi
 
+# ── Check for update notification ──────────────────────────────
+VERSION_CACHE="$STATE_DIR/version-check.json"
+UPDATE_MSG=""
+if [ -f "$VERSION_CACHE" ]; then
+  VERSION_CACHE_DATA=$(cat "$VERSION_CACHE" 2>/dev/null)
+  if [ -n "$VERSION_CACHE_DATA" ]; then
+    LATEST=$(echo "$VERSION_CACHE_DATA" | jq -r '.latestVersion // empty' 2>/dev/null)
+    CURRENT=$(echo "$VERSION_CACHE_DATA" | jq -r '.currentVersion // empty' 2>/dev/null)
+    if [ -n "$LATEST" ] && [ -n "$CURRENT" ] && [ "$LATEST" != "$CURRENT" ]; then
+      UPDATE_MSG="Update: v${LATEST} available!"
+    fi
+  fi
+fi
+
 # ── Read buddy status ───────────────────────────────────────
 STATUS=$(cat "$STATUS_FILE" 2>/dev/null) || exit 0
 [ -n "$STATUS" ] || exit 0
@@ -148,8 +162,12 @@ LEFT_1=""
 [ -n "$CC_MODEL" ] && LEFT_1="${CYAN}${CC_MODEL}${NC}"
 [ -n "$CC_CONTEXT" ] && LEFT_1="${LEFT_1:+${LEFT_1} ${GRAY}·${NC} }${GREEN}${CC_CONTEXT}${NC}"
 
-# Line 2: (empty)
+# Line 2: update notification (if available)
+YELLOW=$'\033[38;2;255;200;50m'
 LEFT_2=""
+if [ -n "$UPDATE_MSG" ]; then
+  LEFT_2="${YELLOW}${UPDATE_MSG}${NC}"
+fi
 
 # Line 3: buddy speech (rotates every 10s, or shows reaction)
 SPEECH=""
@@ -253,9 +271,10 @@ RIGHT_MARGIN=4
 RIGHT_PAD=$(( COLS - ART_W - RIGHT_MARGIN ))
 [ "$RIGHT_PAD" -lt 0 ] && RIGHT_PAD=0
 
-# Build left array — line 1: model+context, rest empty
+# Build left array — line 1: model+context, line 2: update notice (if any)
 LEFT_LINES=()
 LEFT_LINES+=("$LEFT_1")  # line 1: model · context
+LEFT_LINES+=("$LEFT_2")  # line 2: update notification (or empty)
 
 # Pad rest with empty lines
 while [ ${#LEFT_LINES[@]} -lt "$TOTAL_LINES" ]; do

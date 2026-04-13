@@ -74,11 +74,13 @@ export const STOP_HOOK_SCRIPT = `${PROJECT_DIR}/hooks/stop.sh`;
 export const USER_PROMPT_HOOK_SCRIPT = `${PROJECT_DIR}/hooks/user-prompt-submit.sh`;
 export const STATUSLINE_SCRIPT = `${PROJECT_DIR}/statusline/buddy-status.sh`;
 export const SERVER_ENTRY_TS = `${PROJECT_DIR}/src/server/index.ts`;
-export const SERVER_ENTRY_JS = `${PROJECT_DIR}/dist/src/server/index.js`;
+export const SERVER_ENTRY_JS = `${PROJECT_DIR}/dist/server.mjs`;
+/** Legacy tsc output path — kept for backward compatibility */
+export const SERVER_ENTRY_JS_LEGACY = `${PROJECT_DIR}/dist/src/server/index.js`;
 
-/** Find the best runtime and server entry — prefers bun (fast), falls back to node (compiled JS) */
+/** Find the best runtime — Bun (fastest) > bundled node > legacy node */
 export function getRuntime(): { command: string; serverEntry: string } {
-  // Check for bun (can run .ts directly)
+  // Prefer bun (fastest — native TS, ~120ms startup)
   const bunCandidates = [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
   for (const p of bunCandidates) {
     if (existsSync(p)) {
@@ -86,9 +88,14 @@ export function getRuntime(): { command: string; serverEntry: string } {
     }
   }
 
-  // Fall back to node (needs compiled .js from dist/)
+  // No bun — use bundled ESM with node (~600ms but works everywhere)
   if (existsSync(SERVER_ENTRY_JS)) {
     return { command: "node", serverEntry: SERVER_ENTRY_JS };
+  }
+
+  // Fall back to legacy tsc output
+  if (existsSync(SERVER_ENTRY_JS_LEGACY)) {
+    return { command: "node", serverEntry: SERVER_ENTRY_JS_LEGACY };
   }
 
   // Last resort: assume bun in PATH

@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { StateManager } from "../src/state/state-manager.js";
 import { PlayerStateSchema } from "../src/state/schemas.js";
+import { checkForUpdate, getCurrentVersion } from "../src/engine/version-check.js";
 
 import type { ClaudeConfig, ClaudeSettings } from "./shared.js";
 import {
@@ -310,6 +311,38 @@ async function checkStateValidity(): Promise<CheckResult> {
   }
 }
 
+// ── Check 12: Version ──────────────────────────────────────────
+
+async function checkVersion(): Promise<CheckResult> {
+  const current = getCurrentVersion();
+  if (current === "unknown") {
+    return { label: "Version", passed: false, detail: "could not determine current version" };
+  }
+
+  try {
+    const result = await checkForUpdate();
+    if (!result) {
+      return {
+        label: "Version",
+        passed: true,
+        detail: `v${current} (could not reach npm registry)`,
+      };
+    }
+
+    if (result.hasUpdate) {
+      return {
+        label: "Version",
+        passed: false,
+        detail: `v${current} (v${result.latest} available — run: npm install -g @umang-boss/claudemon)`,
+      };
+    }
+
+    return { label: "Version", passed: true, detail: `v${current} (latest)` };
+  } catch {
+    return { label: "Version", passed: true, detail: `v${current} (check skipped)` };
+  }
+}
+
 // ── Main ─────────────────────────────────────────────────────
 
 export async function doctor(): Promise<void> {
@@ -319,6 +352,7 @@ export async function doctor(): Promise<void> {
   console.log("");
 
   const checks: CheckResult[] = [
+    await checkVersion(),
     await checkBun(),
     await checkStateDir(),
     await checkStateFile(),
