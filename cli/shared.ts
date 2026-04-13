@@ -5,6 +5,7 @@
 
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 
 // ── Config shape interfaces ──────────────────────────────────
 
@@ -53,7 +54,13 @@ if (!HOME) {
 export const CLI_HOME = HOME;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-export const PROJECT_DIR = resolve(dirname(__dirname));
+
+// Resolve project root — works from both src (cli/) and compiled (dist/cli/)
+let projectDir = resolve(dirname(__dirname));
+if (projectDir.endsWith("/dist") || projectDir.endsWith("\\dist")) {
+  projectDir = resolve(projectDir, "..");
+}
+export const PROJECT_DIR = projectDir;
 export const CLAUDE_DIR = `${HOME}/.claude`;
 export const CLAUDE_CONFIG = `${HOME}/.claude.json`;
 export const CLAUDE_SETTINGS = `${CLAUDE_DIR}/settings.json`;
@@ -70,8 +77,6 @@ export const SERVER_ENTRY_JS = `${PROJECT_DIR}/dist/src/server/index.js`;
 
 /** Find the best runtime and server entry — prefers bun (fast), falls back to node (compiled JS) */
 export function getRuntime(): { command: string; serverEntry: string } {
-  const { existsSync } = require("node:fs") as { existsSync: (p: string) => boolean };
-
   // Check for bun (can run .ts directly)
   const bunCandidates = [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
   for (const p of bunCandidates) {
