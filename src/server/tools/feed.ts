@@ -32,6 +32,9 @@ const FEED_REACTIONS: Record<PokemonType, (name: string) => string> = {
   Rock: (n) => `*${n} crunches a Mineral Cookie!* \u{1FAA8}`,
   Ghost: (n) => `*${n} absorbs a Shadow Treat!* \u{1F47B}`,
   Dragon: (n) => `*${n} feasts on a Dragon Scale Fruit!* \u{1F409}`,
+  Steel: (n) => `*${n} crunches an Iron Biscuit!* \u{2699}\u{FE0F}`,
+  Dark: (n) => `*${n} savors a Midnight Truffle!* \u{1F31A}`,
+  Fairy: (n) => `*${n} nibbles a Moonlight Macaron!* \u{2728}`,
 };
 
 /** Get a feed reaction based on the Pokemon's primary type. */

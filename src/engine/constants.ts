@@ -11,7 +11,7 @@ export const MAX_PARTY_SIZE = 6;
 export const MAX_LEVEL = 100;
 export const STARTER_LEVEL = 5;
 export const MAX_HAPPINESS = 255;
-export const TOTAL_POKEMON = 151;
+export const TOTAL_POKEMON = 905;
 
 // ── XP Awards per Event ────────────────────────────────────
 

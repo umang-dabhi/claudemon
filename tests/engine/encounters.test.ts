@@ -118,21 +118,21 @@ describe("shouldDiversityBonus", () => {
 // ── getTimeOfDayBias Tests ───────────────────────────────────
 
 describe("getTimeOfDayBias", () => {
-  test("returns Ghost/Poison at night (22-4)", () => {
-    expect(getTimeOfDayBias(22)).toEqual(["Ghost", "Poison"]);
-    expect(getTimeOfDayBias(23)).toEqual(["Ghost", "Poison"]);
-    expect(getTimeOfDayBias(0)).toEqual(["Ghost", "Poison"]);
-    expect(getTimeOfDayBias(3)).toEqual(["Ghost", "Poison"]);
+  test("returns Ghost/Dark at night (22-4)", () => {
+    expect(getTimeOfDayBias(22)).toEqual(["Ghost", "Dark"]);
+    expect(getTimeOfDayBias(23)).toEqual(["Ghost", "Dark"]);
+    expect(getTimeOfDayBias(0)).toEqual(["Ghost", "Dark"]);
+    expect(getTimeOfDayBias(3)).toEqual(["Ghost", "Dark"]);
   });
 
-  test("returns Grass/Bug in morning (5-8)", () => {
-    expect(getTimeOfDayBias(5)).toEqual(["Grass", "Bug"]);
-    expect(getTimeOfDayBias(8)).toEqual(["Grass", "Bug"]);
+  test("returns Grass/Fairy in morning (5-8)", () => {
+    expect(getTimeOfDayBias(5)).toEqual(["Grass", "Fairy"]);
+    expect(getTimeOfDayBias(8)).toEqual(["Grass", "Fairy"]);
   });
 
-  test("returns Fire/Rock at midday (12-13)", () => {
-    expect(getTimeOfDayBias(12)).toEqual(["Fire", "Rock"]);
-    expect(getTimeOfDayBias(13)).toEqual(["Fire", "Rock"]);
+  test("returns Fire/Steel at midday (12-13)", () => {
+    expect(getTimeOfDayBias(12)).toEqual(["Fire", "Steel"]);
+    expect(getTimeOfDayBias(13)).toEqual(["Fire", "Steel"]);
   });
 
   test("returns Water/Flying in evening (17-19)", () => {
@@ -203,6 +203,9 @@ describe("getEncounterTypes", () => {
       "Rock",
       "Ghost",
       "Dragon",
+      "Steel",
+      "Dark",
+      "Fairy",
     ];
 
     const eventTypes: XpEventType[] = [
@@ -243,7 +246,7 @@ describe("generateEncounter", () => {
     expect(encounter).not.toBeNull();
     if (encounter) {
       expect(encounter.pokemonId).toBeGreaterThanOrEqual(1);
-      expect(encounter.pokemonId).toBeLessThanOrEqual(151);
+      expect(encounter.pokemonId).toBeLessThanOrEqual(905);
       expect(POKEMON_BY_ID.has(encounter.pokemonId)).toBe(true);
     }
   });

@@ -28,6 +28,9 @@ const PET_REACTIONS: Record<PokemonType, (name: string) => string> = {
   Rock: (n) => `*${n} rumbles warmly, solid as ever*`,
   Ghost: (n) => `*${n} phases through your hand... then comes back for more*`,
   Dragon: (n) => `*${n} lets out a low, pleased growl*`,
+  Steel: (n) => `*${n}'s metal surface warms to your touch*`,
+  Dark: (n) => `*${n} reluctantly leans into the pets... don't tell anyone*`,
+  Fairy: (n) => `*${n} giggles and showers you with sparkles!*`,
 };
 
 /** Get a pet reaction based on the Pokemon's primary type. */

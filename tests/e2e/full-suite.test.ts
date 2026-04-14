@@ -98,19 +98,19 @@ describe("Phase 1: Foundation", () => {
   // ── Pokemon Data ─────────────────────────────────────────
 
   describe("Pokemon Data Integrity", () => {
-    test("has exactly 151 Pokemon", () => {
-      expect(POKEDEX.length).toBe(151);
+    test("has exactly 905 Pokemon", () => {
+      expect(POKEDEX.length).toBe(905);
     });
 
-    test("all Pokemon have valid IDs 1-151", () => {
+    test("all Pokemon have valid IDs 1-905", () => {
       for (const p of POKEDEX) {
         expect(p.id).toBeGreaterThanOrEqual(1);
-        expect(p.id).toBeLessThanOrEqual(151);
+        expect(p.id).toBeLessThanOrEqual(905);
       }
     });
 
-    test("POKEMON_BY_ID has all 151 entries", () => {
-      expect(POKEMON_BY_ID.size).toBe(151);
+    test("POKEMON_BY_ID has all 905 entries", () => {
+      expect(POKEMON_BY_ID.size).toBe(905);
     });
 
     test("POKEMON_BY_NAME lookup works (case insensitive)", () => {
@@ -302,12 +302,12 @@ describe("Phase 2: Evolution & Sprites", () => {
       expect(links[0]!.method).toEqual({ type: "level", level: 16 });
     });
 
-    test("Eevee has 3 evolution paths", () => {
+    test("Eevee has 3 stat-based evolution paths", () => {
       const links = getEvolutionLinks(133);
-      expect(links.length).toBe(3);
+      expect(links.length).toBe(3); // Vaporeon, Jolteon, Flareon (original stat-based)
     });
 
-    test("Farfetch'd has no evolution", () => {
+    test("Farfetch'd has no evolution in Gen 1 chains", () => {
       const links = getEvolutionLinks(83);
       expect(links.length).toBe(0);
     });
@@ -394,7 +394,7 @@ describe("Phase 2: Evolution & Sprites", () => {
       expect(sprite!).toContain("\x1b[");
     });
 
-    test("all 151 sprites load", () => {
+    test("all Gen 1 sprites load (151)", () => {
       let loaded = 0;
       for (let id = 1; id <= 151; id++) {
         if (loadSmallSprite(id) !== null) loaded++;
@@ -481,7 +481,7 @@ describe("Phase 3: Gamification & Journey", () => {
       const encounter = generateEncounter("commit", state);
       if (encounter) {
         expect(encounter.pokemonId).toBeGreaterThanOrEqual(1);
-        expect(encounter.pokemonId).toBeLessThanOrEqual(151);
+        expect(encounter.pokemonId).toBeLessThanOrEqual(905);
         expect(encounter.level).toBeGreaterThanOrEqual(1);
       }
     });
@@ -730,8 +730,10 @@ describe("Phase 4: Reactions & Personality", () => {
 // ════════════════════════════════════════════════════════════
 
 describe("Cross-Phase Integration", () => {
-  test("starter pool Pokemon all have sprites", () => {
-    for (const id of STARTER_POOL) {
+  test("Gen 1 starter pool Pokemon all have sprites", () => {
+    // Only Gen 1 starters have colorscripts; Gen 2+ starters may not
+    const gen1Starters = STARTER_POOL.filter((id) => id <= 151);
+    for (const id of gen1Starters) {
       expect(loadSmallSprite(id)).not.toBeNull();
     }
   });

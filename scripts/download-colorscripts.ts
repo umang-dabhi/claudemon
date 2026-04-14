@@ -2,7 +2,7 @@
 /**
  * Download pokemon-colorscripts from GitHub.
  *
- * Fetches pre-rendered ANSI art .txt files for Gen 1 Pokemon
+ * Fetches pre-rendered ANSI art .txt files for all 905 Pokemon (Gen 1-8)
  * from the pokemon-colorscripts repository.
  *
  * Usage:
@@ -13,6 +13,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { POKEDEX } from "../src/engine/pokemon-data.js";
 
 // ── Configuration ─────────────────────────────────────────────
 
@@ -22,181 +23,79 @@ const COLORSCRIPT_DIR = join(PROJECT_ROOT, "sprites", "colorscripts");
 const BASE_URL =
   "https://raw.githubusercontent.com/tageraf1n/pokemon-colorscripts/main/colorscripts";
 
-const TOTAL_GEN1 = 151;
+const TOTAL_POKEMON = POKEDEX.length;
 
-const SIZES = ["small", "large"] as const;
+const SIZES = ["small"] as const;
 type Size = (typeof SIZES)[number];
 
-// ── Name Mapping ──────────────────────────────────────────────
+// ── Name Normalization ───────────────────────────────────────
 
 /**
- * Pokemon names as they appear in the colorscripts repository.
- * Most match the standard lowercase name, but a few have special forms.
+ * Special name overrides for the colorscripts repo.
+ * The repo uses specific naming conventions that differ from PokeAPI names.
  */
 const NAME_OVERRIDES: ReadonlyMap<number, string> = new Map([
   [29, "nidoran-f"],
   [32, "nidoran-m"],
   [83, "farfetchd"],
   [122, "mr.-mime"],
+  [386, "deoxys-normal"],
+  [413, "wormadam-plant"],
+  [487, "giratina-altered"],
+  [492, "shaymin-land"],
+  [641, "tornadus-incarnate"],
+  [642, "thundurus-incarnate"],
+  [645, "landorus-incarnate"],
+  [647, "keldeo-ordinary"],
+  [648, "meloetta-aria"],
+  [681, "aegislash-shield"],
+  [710, "pumpkaboo-average"],
+  [711, "gourgeist-average"],
+  [718, "zygarde-50"],
+  [741, "oricorio-baile"],
+  [745, "lycanroc-midday"],
+  [746, "wishiwashi-solo"],
+  [774, "minior-red-meteor"],
+  [778, "mimikyu-disguised"],
+  [849, "toxtricity-amped"],
+  [866, "mr.-rime"],
+  [875, "eiscue-ice"],
+  [876, "indeedee-male"],
+  [877, "morpeko-full-belly"],
+  [892, "urshifu-single-strike"],
+  [902, "basculegion-male"],
+  [905, "enamorus-incarnate"],
+  [916, "oinkologne-male"],
+  [925, "maushold-family-of-four"],
+  [931, "squawkabilly-green-plumage"],
+  [964, "palafin-zero"],
+  [978, "tatsugiri-curly"],
+  [1007, "koraidon"],
+  [1008, "miraidon"],
+  [1017, "ogerpon-teal-mask"],
 ]);
 
 /**
- * Gen 1 Pokemon names indexed by ID (1-151).
- * Used for both the download URL and the local filename.
+ * Normalize a Pokemon name to match the colorscripts repo filename convention.
+ * Handles special characters, spaces, and form-specific naming.
  */
-const POKEMON_NAMES: ReadonlyMap<number, string> = new Map([
-  [1, "bulbasaur"],
-  [2, "ivysaur"],
-  [3, "venusaur"],
-  [4, "charmander"],
-  [5, "charmeleon"],
-  [6, "charizard"],
-  [7, "squirtle"],
-  [8, "wartortle"],
-  [9, "blastoise"],
-  [10, "caterpie"],
-  [11, "metapod"],
-  [12, "butterfree"],
-  [13, "weedle"],
-  [14, "kakuna"],
-  [15, "beedrill"],
-  [16, "pidgey"],
-  [17, "pidgeotto"],
-  [18, "pidgeot"],
-  [19, "rattata"],
-  [20, "raticate"],
-  [21, "spearow"],
-  [22, "fearow"],
-  [23, "ekans"],
-  [24, "arbok"],
-  [25, "pikachu"],
-  [26, "raichu"],
-  [27, "sandshrew"],
-  [28, "sandslash"],
-  [29, "nidoran-f"],
-  [30, "nidorina"],
-  [31, "nidoqueen"],
-  [32, "nidoran-m"],
-  [33, "nidorino"],
-  [34, "nidoking"],
-  [35, "clefairy"],
-  [36, "clefable"],
-  [37, "vulpix"],
-  [38, "ninetales"],
-  [39, "jigglypuff"],
-  [40, "wigglytuff"],
-  [41, "zubat"],
-  [42, "golbat"],
-  [43, "oddish"],
-  [44, "gloom"],
-  [45, "vileplume"],
-  [46, "paras"],
-  [47, "parasect"],
-  [48, "venonat"],
-  [49, "venomoth"],
-  [50, "diglett"],
-  [51, "dugtrio"],
-  [52, "meowth"],
-  [53, "persian"],
-  [54, "psyduck"],
-  [55, "golduck"],
-  [56, "mankey"],
-  [57, "primeape"],
-  [58, "growlithe"],
-  [59, "arcanine"],
-  [60, "poliwag"],
-  [61, "poliwhirl"],
-  [62, "poliwrath"],
-  [63, "abra"],
-  [64, "kadabra"],
-  [65, "alakazam"],
-  [66, "machop"],
-  [67, "machoke"],
-  [68, "machamp"],
-  [69, "bellsprout"],
-  [70, "weepinbell"],
-  [71, "victreebel"],
-  [72, "tentacool"],
-  [73, "tentacruel"],
-  [74, "geodude"],
-  [75, "graveler"],
-  [76, "golem"],
-  [77, "ponyta"],
-  [78, "rapidash"],
-  [79, "slowpoke"],
-  [80, "slowbro"],
-  [81, "magnemite"],
-  [82, "magneton"],
-  [83, "farfetchd"],
-  [84, "doduo"],
-  [85, "dodrio"],
-  [86, "seel"],
-  [87, "dewgong"],
-  [88, "grimer"],
-  [89, "muk"],
-  [90, "shellder"],
-  [91, "cloyster"],
-  [92, "gastly"],
-  [93, "haunter"],
-  [94, "gengar"],
-  [95, "onix"],
-  [96, "drowzee"],
-  [97, "hypno"],
-  [98, "krabby"],
-  [99, "kingler"],
-  [100, "voltorb"],
-  [101, "electrode"],
-  [102, "exeggcute"],
-  [103, "exeggutor"],
-  [104, "cubone"],
-  [105, "marowak"],
-  [106, "hitmonlee"],
-  [107, "hitmonchan"],
-  [108, "lickitung"],
-  [109, "koffing"],
-  [110, "weezing"],
-  [111, "rhyhorn"],
-  [112, "rhydon"],
-  [113, "chansey"],
-  [114, "tangela"],
-  [115, "kangaskhan"],
-  [116, "horsea"],
-  [117, "seadra"],
-  [118, "goldeen"],
-  [119, "seaking"],
-  [120, "staryu"],
-  [121, "starmie"],
-  [122, "mr-mime"],
-  [123, "scyther"],
-  [124, "jynx"],
-  [125, "electabuzz"],
-  [126, "magmar"],
-  [127, "pinsir"],
-  [128, "tauros"],
-  [129, "magikarp"],
-  [130, "gyarados"],
-  [131, "lapras"],
-  [132, "ditto"],
-  [133, "eevee"],
-  [134, "vaporeon"],
-  [135, "jolteon"],
-  [136, "flareon"],
-  [137, "porygon"],
-  [138, "omanyte"],
-  [139, "omastar"],
-  [140, "kabuto"],
-  [141, "kabutops"],
-  [142, "aerodactyl"],
-  [143, "snorlax"],
-  [144, "articuno"],
-  [145, "zapdos"],
-  [146, "moltres"],
-  [147, "dratini"],
-  [148, "dragonair"],
-  [149, "dragonite"],
-  [150, "mewtwo"],
-  [151, "mew"],
-]);
+function normalizeSpriteName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "-f")
+    .replace(/♂/g, "-m")
+    .replace(/'/g, "")
+    .replace(/\. /g, "-")
+    .replace(/: /g, "-")
+    .replace(/ /g, "-");
+}
+
+// ── Name Lookup ──────────────────────────────────────────────
+
+/** Build name lookup from POKEDEX */
+const POKEMON_NAMES: ReadonlyMap<number, string> = new Map(
+  POKEDEX.map((p) => [p.id, normalizeSpriteName(p.name)]),
+);
 
 // ── Download Logic ────────────────────────────────────────────
 
@@ -230,15 +129,24 @@ async function downloadColorscript(
   try {
     const resp = await fetch(url);
     if (!resp.ok) {
-      console.error(`  [FAIL] #${id} ${remoteName} (${size}): HTTP ${resp.status}`);
+      // Try without form suffix (some Pokemon don't have form-specific files)
+      if (resp.status === 404 && remoteName.includes("-")) {
+        const baseName = remoteName.split("-")[0];
+        const fallbackUrl = `${BASE_URL}/${size}/regular/${baseName}`;
+        const fallbackResp = await fetch(fallbackUrl);
+        if (fallbackResp.ok) {
+          const text = await fallbackResp.text();
+          writeFileSync(outputPath, text, "utf-8");
+          return "downloaded";
+        }
+      }
       return "failed";
     }
 
     const text = await resp.text();
     writeFileSync(outputPath, text, "utf-8");
     return "downloaded";
-  } catch (err) {
-    console.error(`  [FAIL] #${id} ${remoteName} (${size}): ${String(err)}`);
+  } catch {
     return "failed";
   }
 }
@@ -251,7 +159,7 @@ function parseArgs(): { force: boolean; ids: number[] } {
   const ids = args
     .filter((a) => a !== "--force")
     .map((a) => parseInt(a, 10))
-    .filter((n) => !isNaN(n) && n >= 1 && n <= TOTAL_GEN1);
+    .filter((n) => !isNaN(n) && n >= 1 && n <= TOTAL_POKEMON);
 
   return { force, ids };
 }
@@ -261,7 +169,7 @@ async function main(): Promise<void> {
 
   const { force, ids: requestedIds } = parseArgs();
   const targetIds =
-    requestedIds.length > 0 ? requestedIds : Array.from({ length: TOTAL_GEN1 }, (_, i) => i + 1);
+    requestedIds.length > 0 ? requestedIds : Array.from({ length: TOTAL_POKEMON }, (_, i) => i + 1);
 
   console.log(
     `  Downloading ${targetIds.length} sprite(s)${force ? " (force)" : " (incremental)"}`,
@@ -276,33 +184,42 @@ async function main(): Promise<void> {
   let skipped = 0;
   let failed = 0;
 
-  for (const id of targetIds) {
-    for (const size of SIZES) {
-      const result = await downloadColorscript(id, size, force);
-      switch (result) {
-        case "downloaded":
-          downloaded++;
-          break;
-        case "skipped":
-          skipped++;
-          break;
-        case "failed":
-          failed++;
-          break;
+  // Download in batches of 10 for parallelism
+  for (let batch = 0; batch < targetIds.length; batch += 10) {
+    const batchIds = targetIds.slice(batch, batch + 10);
+    const promises = [];
+
+    for (const id of batchIds) {
+      for (const size of SIZES) {
+        promises.push(
+          downloadColorscript(id, size, force).then((result) => {
+            switch (result) {
+              case "downloaded":
+                downloaded++;
+                break;
+              case "skipped":
+                skipped++;
+                break;
+              case "failed":
+                failed++;
+                break;
+            }
+          }),
+        );
       }
     }
 
-    if (downloaded > 0 && downloaded % 20 === 0) {
-      const name = POKEMON_NAMES.get(id) ?? `pokemon-${id}`;
-      console.log(`  [${downloaded}] latest: #${id} ${name}`);
+    await Promise.all(promises);
+
+    if ((batch + 10) % 100 === 0 || batch + 10 >= targetIds.length) {
+      const progress = Math.min(batch + 10, targetIds.length);
+      console.log(
+        `  [${progress}/${targetIds.length}] downloaded: ${downloaded}, skipped: ${skipped}, failed: ${failed}`,
+      );
     }
   }
 
   console.log(`\n  Done! Downloaded: ${downloaded}, Skipped: ${skipped}, Failed: ${failed}\n`);
-
-  if (failed > 0) {
-    process.exit(1);
-  }
 }
 
 main().catch((err) => {

@@ -33,9 +33,9 @@ const ENCOUNTER_TYPE_MAP: Readonly<Record<XpEventType, readonly PokemonType[]>> 
   file_edit: ["Normal", "Ground"],
   search: ["Flying", "Ground"],
   large_refactor: ["Psychic", "Dragon"],
-  session_start: ["Grass", "Normal"],
+  session_start: ["Grass", "Fairy"],
   daily_streak: ["Water", "Electric"],
-  pet: ["Normal"],
+  pet: ["Normal", "Fairy"],
 };
 
 /** Maps an XP event type to the Pokemon types that can appear. */
@@ -87,9 +87,9 @@ export function shouldDiversityBonus(recentToolTypes: string[]): boolean {
 
 /** Get time-of-day type biases for encounter generation. */
 export function getTimeOfDayBias(hour: number): PokemonType[] {
-  if (hour >= 22 || hour < 5) return ["Ghost", "Poison"]; // Night: Ghost types
-  if (hour >= 5 && hour < 9) return ["Grass", "Bug"]; // Morning: Grass types
-  if (hour >= 12 && hour < 14) return ["Fire", "Rock"]; // Midday: Fire types
+  if (hour >= 22 || hour < 5) return ["Ghost", "Dark"]; // Night: Ghost/Dark types
+  if (hour >= 5 && hour < 9) return ["Grass", "Fairy"]; // Morning: Grass/Fairy types
+  if (hour >= 12 && hour < 14) return ["Fire", "Steel"]; // Midday: Fire/Steel types
   if (hour >= 17 && hour < 20) return ["Water", "Flying"]; // Evening: Water types
   return []; // No bias
 }
@@ -125,6 +125,9 @@ const TYPE_TO_STAT: Readonly<Record<PokemonType, CodingStat>> = {
   Rock: "stability",
   Ghost: "wisdom",
   Dragon: "wisdom",
+  Steel: "stability",
+  Dark: "debugging",
+  Fairy: "wisdom",
 };
 
 /** Minimum stat thresholds by rarity tier. */

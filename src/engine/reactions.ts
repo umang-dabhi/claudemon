@@ -808,6 +808,159 @@ const REACTION_TEMPLATES: Record<PokemonType, Record<ReactionEvent, readonly str
       "*{name} polishes its scales with quiet dignity*",
     ],
   },
+
+  // ── Steel: precise, methodical ────────────────────────────
+  Steel: {
+    error: [
+      "*{name} analyzes the error with mechanical precision*",
+      "*{name}'s armor deflects the bug effortlessly*",
+      "*{name} recalibrates and prepares a fix*",
+      "Structural integrity compromised. *{name} assesses damage*",
+      "*{name} clanks disapprovingly at the impurity*",
+    ],
+    test_fail: [
+      "*{name} detects a flaw in the alloy*",
+      "*{name} runs diagnostics on the failure*",
+      "Tolerance exceeded. *{name} recalibrates*",
+      "*{name} marks the defect for reworking*",
+    ],
+    test_pass: [
+      "*{name} gleams with polished satisfaction!*",
+      "Quality assured. *{name} stamps approval*",
+      "*{name}'s armor shines brighter with each pass!*",
+      "*{name} forges ahead with reinforced confidence!*",
+    ],
+    commit: [
+      "*{name} stamps the commit with a steel seal*",
+      "Forged and committed. *{name} nods precisely*",
+      "*{name} welds the changes into the main branch*",
+      "*{name} tempers the code into production-ready steel*",
+    ],
+    level_up: [
+      "*{name} is reforged — stronger than ever!*",
+      "{name} leveled up! Hardened by experience!",
+      "*{name}'s alloy composition has evolved!*",
+      "*{name} emerges from the forge renewed!*",
+    ],
+    encounter: [
+      "*{name}'s sensors detect an approaching entity*",
+      "*{name} raises its steel guard — something approaches*",
+      "*{name} scans the newcomer with metallic precision*",
+    ],
+    pet: [
+      "*{name}'s metal surface warms to your touch*",
+      "*{name} hums contentedly like a well-oiled machine*",
+      "*{name} lets out a soft metallic purr*",
+      "*{name} polishes itself proudly under your attention*",
+    ],
+    idle: [
+      "*{name} runs self-maintenance routines quietly*",
+      "*{name} stands guard like an unbreakable sentinel*",
+      "*{name} reflects light off its perfectly polished surface*",
+    ],
+  },
+
+  // ── Dark: cunning, night-owl ──────────────────────────────
+  Dark: {
+    error: [
+      "*{name} smirks at the error from the shadows*",
+      "*{name} dissects the bug with ruthless efficiency*",
+      "How predictable. *{name} saw it coming*",
+      "*{name} lurks around the error, studying its weakness*",
+      "*{name} strikes from the darkness to eliminate the bug*",
+    ],
+    test_fail: [
+      "*{name} chuckles darkly at the failure*",
+      "*{name} plots a devious fix from the shadows*",
+      "Every failure feeds the darkness. *{name} adapts*",
+      "*{name} embraces the failure as useful intelligence*",
+    ],
+    test_pass: [
+      "*{name} grins with satisfaction from the shadows!*",
+      "The plan worked perfectly. *{name} nods*",
+      "*{name} emerges from the darkness, victorious!*",
+      "*{name}'s cunning strategy pays off once again!*",
+    ],
+    commit: [
+      "*{name} slips the commit in under cover of darkness*",
+      "*{name} seals the commit with a shadow mark*",
+      "Another piece falls into place. *{name} smirks*",
+      "*{name} commits the code with midnight precision*",
+    ],
+    level_up: [
+      "*{name}'s shadow grows darker and more powerful!*",
+      "{name} leveled up! The darkness intensifies!",
+      "*{name} absorbs the night — growing ever stronger!*",
+      "*{name} emerges from the shadows transformed!*",
+    ],
+    encounter: [
+      "*{name} senses a presence in the darkness*",
+      "*{name}'s eyes gleam red — something stirs nearby*",
+      "*{name} melts into shadow, watching the newcomer*",
+    ],
+    pet: [
+      "*{name} reluctantly enjoys the attention*",
+      "*{name} nuzzles you... then pretends it didn't happen*",
+      "*{name} purrs softly in the darkness*",
+      "*{name} allows this rare moment of vulnerability*",
+    ],
+    idle: [
+      "*{name} lurks in the shadows, watching everything*",
+      "*{name} plots its next move with quiet cunning*",
+      "*{name} blends into the dark corners of the terminal*",
+    ],
+  },
+
+  // ── Fairy: whimsical, magical ─────────────────────────────
+  Fairy: {
+    error: [
+      "*{name} waves its wand — trying to magic the bug away!*",
+      "*{name} gasps dramatically at the error*",
+      "*{name} sprinkles debugging dust on the problem*",
+      "*{name} pouts adorably at the unexpected error*",
+      "*{name} hums a healing melody over the broken code*",
+    ],
+    test_fail: [
+      "*{name} tilts its head — that wasn't supposed to happen!*",
+      "*{name} conjures a sparkly fix spell*",
+      "Even magic has its limits. *{name} sighs cutely*",
+      "*{name} believes in you — try again!*",
+    ],
+    test_pass: [
+      "*{name} showers everything in sparkles and confetti!*",
+      "Pure magic! *{name} twirls with delight!*",
+      "*{name} enchants the passing tests with a happy dance!*",
+      "*{name}'s wings shimmer with prismatic joy!*",
+    ],
+    commit: [
+      "*{name} blesses the commit with fairy magic!*",
+      "*{name} leaves a trail of sparkles on the commit*",
+      "*{name} giggles happily — another spell cast!*",
+      "*{name} seals the commit with a magical kiss*",
+    ],
+    level_up: [
+      "*{name} glows with an ethereal radiance!*",
+      "{name} leveled up! Fairy power overflows!",
+      "*{name}'s magic swells — enchantment intensifies!*",
+      "*{name} evolves in a shower of moonlight and stars!*",
+    ],
+    encounter: [
+      "*{name} senses something magical approaching!*",
+      "*{name}'s antenna sparkles — a new friend?*",
+      "*{name} flutters excitedly toward the newcomer!*",
+    ],
+    pet: [
+      "*{name} nuzzles into your hand with a happy squeal!*",
+      "*{name} radiates warmth and sparkly affection!*",
+      "*{name} hums a grateful little melody*",
+      "*{name} leaves glitter everywhere — worth it!*",
+    ],
+    idle: [
+      "*{name} floats gently, trailing sparkles*",
+      "*{name} hums a mysterious fairy tune*",
+      "*{name} plays with magical wisps of light*",
+    ],
+  },
 };
 
 // ── Public API ──────────────────────────────────────────────
@@ -871,6 +1024,9 @@ export function getTypePersonality(primaryType: PokemonType): string {
     Rock: "Stoic and reliable. Unmoved by setbacks, steady through every storm.",
     Ghost: "Spooky with dark humor. Finds the macabre funny and haunts the codebase.",
     Dragon: "Proud and regal. Views coding as a noble pursuit worthy of dragonkind.",
+    Steel: "Precise and methodical. Every line of code is forged with mechanical perfection.",
+    Dark: "Cunning and sharp. Thrives in late-night sessions with clever problem-solving.",
+    Fairy: "Whimsical and delightful. Makes even debugging feel like a magical adventure.",
   };
 
   return personalities[primaryType];

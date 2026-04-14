@@ -212,8 +212,8 @@ describe("loadSmallSprite", () => {
     expect(loadSmallSprite(0)).toBeNull();
   });
 
-  test("returns null for Pokemon ID beyond 151", () => {
-    expect(loadSmallSprite(152)).toBeNull();
+  test("returns null for Pokemon ID beyond 905", () => {
+    expect(loadSmallSprite(1026)).toBeNull();
   });
 
   test("returns null for negative Pokemon ID", () => {
@@ -226,7 +226,7 @@ describe("loadSmallSprite", () => {
 
   test("returns string or null for valid Pokemon IDs (depends on sprite files)", () => {
     // This test verifies the function never crashes for valid IDs
-    for (let id = 1; id <= 151; id++) {
+    for (let id = 1; id <= 905; id++) {
       const result = loadSmallSprite(id);
       if (result !== null) {
         expect(typeof result).toBe("string");
@@ -378,18 +378,18 @@ describe("encounter edge cases", () => {
       number,
       { seen: boolean; caught: boolean; firstSeen: string | null; firstCaught: string | null }
     > = {};
-    for (let i = 1; i <= 151; i++) {
+    for (let i = 1; i <= 905; i++) {
       entries[i] = { seen: true, caught: true, firstSeen: "2026-01-01", firstCaught: "2026-01-01" };
     }
     const state = makeState({
-      pokedex: { entries, totalSeen: 151, totalCaught: 151 },
+      pokedex: { entries, totalSeen: 905, totalCaught: 905 },
     });
 
     // Should return null or a valid encounter (common duplicates still allowed)
     const encounter = generateEncounter("commit", state);
     if (encounter) {
       expect(encounter.pokemonId).toBeGreaterThanOrEqual(1);
-      expect(encounter.pokemonId).toBeLessThanOrEqual(151);
+      expect(encounter.pokemonId).toBeLessThanOrEqual(905);
     }
   });
 

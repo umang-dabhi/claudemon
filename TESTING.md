@@ -48,7 +48,7 @@ bun run format:check
 The E2E suite (`tests/e2e/full-suite.test.ts`) covers every phase in one run:
 
 **Phase 1 — Foundation (30 tests)**
-- Pokemon data integrity (151 Pokemon, IDs, base stats, rarity)
+- Pokemon data integrity (905 Pokemon, IDs, base stats, rarity)
 - XP formulas match Gen 1 at known checkpoints
 - Level-up, multi level-up, max level cap
 - Stat system (init, scaling, boost, bars, titles)
@@ -60,19 +60,19 @@ The E2E suite (`tests/e2e/full-suite.test.ts`) covers every phase in one run:
 - Dominant stat for Eevee branching (including tie detection)
 - Apply evolution (pokemonId change, evolvedAt timestamp)
 - Badge earning and filtering
-- Colorscript sprites (all 151 load, ANSI content, caching, invalid IDs)
+- Colorscript sprites (Gen 1 sprites load, ANSI content, caching, invalid IDs)
 
 **Phase 3 — Gamification (27 tests)**
 - Encounter trigger threshold (500 XP)
 - Encounter type mapping (all 13 event types)
-- Encounter pool integrity (15 types, no legendaries, base-stage only)
+- Encounter pool integrity (18 types, no legendaries, base-stage only)
 - Achievement conditions (counter, level, streak, party_size)
 - Achievement detection and deduplication
 - Milestones (Pidgey at 1 commit, Abra at 50, exclusion of caught)
 - Legendary quests (5 quests, 4 steps each, progress tracking)
 
 **Phase 4 — Reactions & Personality (8 tests)**
-- Reactions for all 15 types
+- Reactions for all 18 types
 - `{name}` placeholder substitution
 - Cooldown enforcement
 - Dynamic instructions (null state, active Pokemon, encounter notes)
@@ -179,7 +179,7 @@ rm ~/.claudemon/state.json
 
 ### Test M9: Pokedex
 
-1. `/buddy pokedex` — shows 151-entry grid (● caught, ◐ seen, ○ unknown)
+1. `/buddy pokedex` — shows 905-entry grid (● caught, ◐ seen, ○ unknown)
 2. `/buddy pokedex caught` — shows only caught Pokemon
 3. `/buddy pokedex pikachu` — shows specific Pokemon detail
 

@@ -10,17 +10,20 @@ fill your Pokedex -- all while you code.
 
 ## Features
 
-- **151 Pokemon** with authentic base stats and evolution chains
+- **905 Pokemon** (Gen 1-8) with authentic base stats and evolution chains
+- **18 types** including Steel, Dark, and Fairy
 - **XP from coding** -- commits, tests, builds, edits, and more
 - **Level up & evolve** -- Charmander -> Charmeleon -> Charizard
 - **Wild encounters** -- Pokemon appear based on your coding activity
-- **Catch 'em all** -- fill your 151-entry Pokedex
+- **Catch 'em all** -- fill your 905-entry Pokedex
+- **Share codes** -- compare Pokemon & stats with friends (no server needed)
+- **PC Box** -- browse and manage stored Pokemon
 - **Achievements** -- 17 milestones to unlock
 - **Legendary quests** -- multi-step challenges for Articuno, Zapdos, Moltres, Mewtwo, Mew
-- **Colored terminal sprites** -- hand-crafted pixel art in your terminal
+- **Colored terminal sprites** -- 905 hand-crafted pixel art sprites in your terminal
 - **Status line** -- sprite + name + model + buddy speech on the prompt line
-- **Type personalities** -- 15 unique reaction styles
-- **Nickname your Pokemon** -- give them custom names
+- **Type personalities** -- 18 unique reaction styles
+- **Nickname your Pokemon** -- shown as "Sparky (Pikachu)" everywhere
 
 ## Install
 
@@ -65,9 +68,17 @@ Once installed, use `/buddy` in Claude Code:
 | `/buddy catch confirm` | Throw a Pokeball! |
 | `/buddy party` | View party (6 max) |
 | `/buddy switch 2` | Switch active Pokemon |
-| `/buddy pokedex` | Track your 151 collection |
+| `/buddy box` | Browse PC Box |
+| `/buddy pokedex` | Track your 905 collection |
 | `/buddy achievements` | View progress |
 | `/buddy legendary` | Legendary quest chains |
+| `/buddy share` | Generate share code for your Pokemon |
+| `/buddy share party` | Share your full trainer profile |
+| `/buddy compare <code>` | Compare with a friend's share code |
+| `/buddy feed` | Feed your Pokemon (+happiness) |
+| `/buddy train` | Train a stat (+XP) |
+| `/buddy play` | Pokemon trivia quiz |
+| `/buddy help` | Categorized command reference |
 | `/buddy hide` | Hide sprite from status line |
 | `/buddy unhide` | Show sprite |
 
@@ -121,9 +132,11 @@ As you code, wild Pokemon appear based on your activity:
 - Fixing bugs -> Bug/Poison types
 - Writing tests -> Fighting/Normal types
 - Large refactors -> Psychic/Dragon types
-- Build/compile -> Fire/Rock types
+- Build/compile -> Fire/Steel types
+- Late night coding -> Ghost/Dark types
+- Morning sessions -> Grass/Fairy types
 
-Encounters trigger roughly every 500 XP earned. Use `/buddy catch` to try catching them!
+Encounters trigger roughly every 250 XP earned (configurable). Use `/buddy catch` to try catching them!
 
 ### Legendary Quests
 
@@ -157,7 +170,7 @@ git clone https://github.com/umang-dabhi/claudemon.git
 cd claudemon
 bun install
 
-# Run tests (309 tests)
+# Run tests (350 tests)
 bun test
 
 # Type checking

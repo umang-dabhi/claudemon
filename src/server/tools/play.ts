@@ -39,8 +39,11 @@ const TYPE_WEAKNESSES: Record<PokemonType, readonly PokemonType[]> = {
   Psychic: ["Bug", "Ghost"],
   Bug: ["Fire", "Flying", "Rock"],
   Rock: ["Water", "Grass", "Fighting", "Ground"],
-  Ghost: ["Ghost"],
-  Dragon: ["Ice", "Dragon"],
+  Ghost: ["Ghost", "Dark"],
+  Dragon: ["Ice", "Dragon", "Fairy"],
+  Steel: ["Fire", "Fighting", "Ground"],
+  Dark: ["Fighting", "Bug", "Fairy"],
+  Fairy: ["Poison", "Steel"],
 };
 
 // ── Utility Functions ─────────────────────────────────────

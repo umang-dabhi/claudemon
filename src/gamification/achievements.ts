@@ -59,9 +59,9 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: "completionist",
     name: "Completionist",
-    description: "Catch all 151 Pokemon",
+    description: "Catch all 905 Pokemon",
     category: "trainer",
-    condition: { type: "pokedex", minCaught: 151 },
+    condition: { type: "pokedex", minCaught: 905 },
   },
 
   // ── Coding Achievements ──────────────────────────────────

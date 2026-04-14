@@ -114,7 +114,7 @@
 - MCP server startup: target < 100ms.
 - Hook execution: target < 200ms.
 - Pre-render sprites at build time. Zero image processing at runtime.
-- Lazy-load sprite data — don't load all 151 into memory at startup.
+- Lazy-load sprite data — don't load all 905 into memory at startup.
 
 ---
 

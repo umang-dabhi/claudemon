@@ -39,11 +39,11 @@ describe("findEvolutionChain", () => {
     const chain = findEvolutionChain(133);
     expect(chain).not.toBeNull();
     expect(chain!.id).toBe(68); // Eevee line is chain 68
-    expect(chain!.links.length).toBe(3); // Vaporeon, Jolteon, Flareon
+    expect(chain!.links.length).toBe(3); // Vaporeon, Jolteon, Flareon (stat-based)
   });
 
   test("returns null for single-stage Pokemon (Farfetch'd, id=83)", () => {
-    // Farfetch'd is in chain 35 which has empty links
+    // Farfetch'd has no evolution in Gen 1 chains (Sirfetch'd is a regional variant)
     const chain = findEvolutionChain(83);
     expect(chain).toBeNull();
   });
@@ -65,7 +65,7 @@ describe("getEvolutionLinks", () => {
     expect(links[0]!.to).toBe(5); // Charmeleon
   });
 
-  test("Eevee has 3 outgoing links", () => {
+  test("Eevee has 3 outgoing links (stat-based)", () => {
     const links = getEvolutionLinks(133);
     expect(links.length).toBe(3);
     const targets = links.map((l) => l.to).sort();

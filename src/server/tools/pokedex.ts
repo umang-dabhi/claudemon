@@ -1,5 +1,5 @@
 /**
- * buddy_pokedex tool — Browse the Pokedex: view all 151, filter by caught/seen,
+ * buddy_pokedex tool — Browse the Pokedex: view all 905, filter by caught/seen,
  * or inspect a specific Pokemon's details.
  */
 
@@ -18,7 +18,7 @@ import { formatTypes, pad, CODING_TO_BASE } from "./display-helpers.js";
 export function registerPokedexTool(server: McpServer): void {
   server.tool(
     "buddy_pokedex",
-    "Browse the Pokedex: view all 151 Pokemon, filter by caught/seen, or look up a specific Pokemon.",
+    "Browse the Pokedex: view all 905 Pokemon, filter by caught/seen, or look up a specific Pokemon.",
     {
       filter: z.enum(["all", "caught", "seen"]).optional(),
       pokemon: z.string().optional(),
@@ -45,7 +45,7 @@ export function registerPokedexTool(server: McpServer): void {
 
       const filter = params.filter ?? "all";
 
-      // ── ALL: Grid of 151 with symbols ──────────────────────
+      // ── ALL: Grid of all Pokemon with symbols ────────────────
       if (filter === "all") {
         const lines: string[] = [];
         lines.push("P O K E D E X");
@@ -199,7 +199,7 @@ function handlePokemonDetail(
       content: [
         {
           type: "text" as const,
-          text: `Pokemon "${query}" not found. Try a name (e.g., "Pikachu") or number (1-151).`,
+          text: `Pokemon "${query}" not found. Try a name (e.g., "Pikachu") or number (1-905).`,
         },
       ],
     };

@@ -25,7 +25,7 @@ export const CodingStatsSchema = z.object({
 
 export const OwnedPokemonSchema = z.object({
   id: z.string(),
-  pokemonId: z.number().int().min(1).max(151),
+  pokemonId: z.number().int().min(1).max(905),
   nickname: z.string().nullable(),
   level: z.number().int().min(1).max(100),
   currentXp: z.number().int().min(0),
@@ -119,7 +119,7 @@ export const CatchConditionSchema = z.object({
 // ---- Wild Encounter ----
 
 export const WildEncounterSchema = z.object({
-  pokemonId: z.number().int().min(1).max(151),
+  pokemonId: z.number().int().min(1).max(905),
   level: z.number().int().min(1).max(100),
   catchCondition: CatchConditionSchema,
 });

@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { OwnedPokemon, CodingStat, WildEncounter } from "../../engine/types.js";
 import { POKEMON_BY_ID } from "../../engine/pokemon-data.js";
-import { BELL, MAX_PARTY_SIZE, STAT_DISPLAY_NAMES } from "../../engine/constants.js";
+import { BELL, MAX_PARTY_SIZE, STAT_DISPLAY_NAMES, TOTAL_POKEMON } from "../../engine/constants.js";
 import { initCodingStats } from "../../engine/stats.js";
 import { canCatch } from "../../engine/encounters.js";
 import { checkNewAchievements, unlockAchievement } from "../../gamification/achievements.js";
@@ -272,7 +272,9 @@ export function registerCatchTool(server: McpServer): void {
         lines.push(`\u2502  ${pad(`Party full! Sent to PC Box.`, W - 2)}\u2502`);
       }
 
-      lines.push(`\u2502  ${pad(`Pokedex: ${state.pokedex.totalCaught}/151 caught`, W - 2)}\u2502`);
+      lines.push(
+        `\u2502  ${pad(`Pokedex: ${state.pokedex.totalCaught}/${TOTAL_POKEMON} caught`, W - 2)}\u2502`,
+      );
       lines.push(`\u2514${border}\u2518`);
 
       // Show new achievements
