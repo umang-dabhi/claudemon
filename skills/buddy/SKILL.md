@@ -66,7 +66,7 @@ This ensures first-time users get the starter selection flow automatically.
 | `share pokemon N <name>` | `buddy_share` with action="pokemon", slot=N, name="<name>" — share with custom name |
 | `compare <code>` | `buddy_share` with action="compare", code="<code>" — compare against a share code |
 | `compare <code> N` | `buddy_share` with action="compare", code="<code>", slot=N — compare using party slot N |
-| `help` | List all available /buddy commands |
+| `help` | `buddy_help` — show categorized command reference |
 
 Pass $ARGUMENTS to determine which subcommand to route to.
 Display all tool output EXACTLY as returned — do not summarize or modify the output.

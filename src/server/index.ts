@@ -24,6 +24,7 @@ import { registerFeedTool } from "./tools/feed.js";
 import { registerTrainTool } from "./tools/train.js";
 import { registerPlayTool } from "./tools/play.js";
 import { registerShareTool } from "./tools/share.js";
+import { registerHelpTool } from "./tools/help.js";
 import { buildInstructions } from "./instructions.js";
 import { checkForUpdate } from "../engine/version-check.js";
 
@@ -76,6 +77,7 @@ async function main(): Promise<void> {
   safeRegister("buddy_train", registerTrainTool, server);
   safeRegister("buddy_play", registerPlayTool, server);
   safeRegister("buddy_share", registerShareTool, server);
+  safeRegister("buddy_help", registerHelpTool, server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();
