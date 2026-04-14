@@ -24,7 +24,8 @@ import { POKEMON_BY_ID } from "../engine/pokemon-data.js";
 
 /** Compact status payload for the shell status line script */
 interface StatusPayload {
-  name: string;
+  name: string; // Species name (used for sprite filename lookup)
+  displayName: string; // "Nickname (Species)" or just "Species" for display
   level: number;
   xpPercent: number;
   speciesId: number;
@@ -314,15 +315,14 @@ export class StateManager {
         ? 100
         : Math.min(100, Math.floor((active.currentXp / Math.max(1, active.currentXp + 50)) * 100));
 
-    // Look up species name if no nickname
-    let displayName = active.nickname ?? "";
-    if (!displayName) {
-      const species = POKEMON_BY_ID.get(active.pokemonId);
-      displayName = species?.name ?? `Pokemon #${active.pokemonId}`;
-    }
+    // Look up species name for sprite lookup and display
+    const species = POKEMON_BY_ID.get(active.pokemonId);
+    const speciesName = species?.name ?? `Pokemon #${active.pokemonId}`;
+    const displayName = active.nickname ? `${active.nickname} (${speciesName})` : speciesName;
 
     const payload: StatusPayload = {
-      name: displayName,
+      name: speciesName,
+      displayName,
       level: active.level,
       xpPercent,
       speciesId: active.pokemonId,
@@ -386,14 +386,13 @@ export class StateManager {
         ? 100
         : Math.min(100, Math.floor((active.currentXp / Math.max(1, active.currentXp + 50)) * 100));
 
-    let displayName = active.nickname ?? "";
-    if (!displayName) {
-      const species = POKEMON_BY_ID.get(active.pokemonId);
-      displayName = species?.name ?? `Pokemon #${active.pokemonId}`;
-    }
+    const species = POKEMON_BY_ID.get(active.pokemonId);
+    const speciesName = species?.name ?? `Pokemon #${active.pokemonId}`;
+    const displayLabel = active.nickname ? `${active.nickname} (${speciesName})` : speciesName;
 
     const payload = {
-      name: displayName,
+      name: speciesName,
+      displayName: displayLabel,
       level: active.level,
       xpPercent,
       speciesId: active.pokemonId,

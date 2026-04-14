@@ -14,9 +14,9 @@ import { formatTypes, pad } from "./display-helpers.js";
 export function registerPartyTool(server: McpServer): void {
   server.tool(
     "buddy_party",
-    "Manage your Pokemon party: list members, switch active, deposit to PC, or withdraw from PC.",
+    "Manage your Pokemon party: list members, switch active, deposit to PC, withdraw from PC, or browse PC Box.",
     {
-      action: z.enum(["list", "switch", "deposit", "withdraw"]).optional(),
+      action: z.enum(["list", "switch", "deposit", "withdraw", "box"]).optional(),
       slot: z.number().int().optional(),
     },
     async (params) => {
@@ -51,7 +51,9 @@ export function registerPartyTool(server: McpServer): void {
           const species = POKEMON_BY_ID.get(pokemon.pokemonId);
           if (!species) continue;
 
-          const displayName = pokemon.nickname ?? species.name;
+          const displayName = pokemon.nickname
+            ? `${pokemon.nickname} (${species.name})`
+            : species.name;
           const typeStr = formatTypes(species.types);
           const marker = pokemon.isActive ? " \u2605" : "";
           const entry = `${i + 1}. ${displayName}  Lv.${pokemon.level}  ${typeStr}${marker}`;
@@ -234,6 +236,60 @@ export function registerPartyTool(server: McpServer): void {
         lines.push(
           `Party: ${state.party.length}/${MAX_PARTY_SIZE}  |  PC Box: ${state.pcBox.length}`,
         );
+
+        return {
+          content: [{ type: "text" as const, text: lines.join("\n") }],
+        };
+      }
+
+      // ── BOX ────────────────────────────────────────────────
+      if (action === "box") {
+        if (state.pcBox.length === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: "Your PC Box is empty! Catch more Pokemon to fill it.",
+              },
+            ],
+          };
+        }
+
+        const W = 42;
+        const border = "\u2500".repeat(W);
+        const lines: string[] = [];
+
+        lines.push(`\u250c${border}\u2510`);
+        lines.push(`\u2502  ${pad("PC BOX", W - 2)}\u2502`);
+        lines.push(`\u2502${" ".repeat(W)}\u2502`);
+
+        for (let i = 0; i < state.pcBox.length; i++) {
+          const pokemon = state.pcBox[i]!;
+          const species = POKEMON_BY_ID.get(pokemon.pokemonId);
+          if (!species) continue;
+
+          const displayName = pokemon.nickname
+            ? `${pokemon.nickname} (${species.name})`
+            : species.name;
+          const typeStr = formatTypes(species.types);
+          const shinyMarker = pokemon.shiny ? " \u2728" : "";
+          const entry = `${i + 1}. ${displayName}  Lv.${pokemon.level}  ${typeStr}${shinyMarker}`;
+          lines.push(`\u2502  ${pad(entry, W - 2)}\u2502`);
+        }
+
+        lines.push(`\u2502${" ".repeat(W)}\u2502`);
+        lines.push(`\u2502  ${pad(`PC Box: ${state.pcBox.length} Pokemon`, W - 2)}\u2502`);
+
+        const partySlots = MAX_PARTY_SIZE - state.party.length;
+        if (partySlots > 0) {
+          lines.push(
+            `\u2502  ${pad(`Party has ${partySlots} open slot${partySlots > 1 ? "s" : ""} — withdraw with /buddy withdraw N`, W - 2)}\u2502`,
+          );
+        } else {
+          lines.push(`\u2502  ${pad("Party is full — deposit first to withdraw", W - 2)}\u2502`);
+        }
+
+        lines.push(`\u2514${border}\u2518`);
 
         return {
           content: [{ type: "text" as const, text: lines.join("\n") }],

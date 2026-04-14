@@ -77,7 +77,7 @@ export function registerShowTool(server: McpServer): void {
       }
 
       // Full mode: detailed card with sprite image
-      const displayName = active.nickname ? `${species.name} (${active.nickname})` : species.name;
+      const displayName = active.nickname ? `${active.nickname} (${species.name})` : species.name;
 
       const needed = xpToNextLevel(active.level, species.expGroup);
       const title = getTrainerTitle(active.level);

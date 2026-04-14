@@ -29,6 +29,7 @@ This ensures first-time users get the starter selection flow automatically.
 | `switch N` | `buddy_party` with action="switch", slot=N |
 | `deposit N` | `buddy_party` with action="deposit", slot=N |
 | `withdraw N` | `buddy_party` with action="withdraw", slot=N |
+| `box` | `buddy_party` with action="box" — browse PC Box contents |
 | `pokedex` | `buddy_pokedex` |
 | `pokedex all` | `buddy_pokedex` with filter="all" |
 | `pokedex caught` | `buddy_pokedex` with filter="caught" |

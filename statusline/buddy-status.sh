@@ -74,6 +74,10 @@ STATUS=$(cat "$STATUS_FILE" 2>/dev/null) || exit 0
 NAME=$(echo "$STATUS" | jq -r '.name // empty')
 [ -n "$NAME" ] || exit 0
 
+# displayName shows "Nickname (Species)" or just "Species" for UI text
+DISPLAY_NAME=$(echo "$STATUS" | jq -r '.displayName // empty')
+[ -z "$DISPLAY_NAME" ] && DISPLAY_NAME="$NAME"
+
 LEVEL=$(echo "$STATUS" | jq -r '.level // 0')
 SPECIES_ID=$(echo "$STATUS" | jq -r '.speciesId // 0')
 EVOLVING=$(echo "$STATUS" | jq -r '.evolutionReady // false')
@@ -107,9 +111,9 @@ done
 
 # ── Build name line ─────────────────────────────────────────
 if [ "$EVOLVING" = "true" ]; then
-  INFO_LINE="${NAME} Lv.${LEVEL} *EVOLVING*"
+  INFO_LINE="${DISPLAY_NAME} Lv.${LEVEL} *EVOLVING*"
 else
-  INFO_LINE="${NAME} Lv.${LEVEL}"
+  INFO_LINE="${DISPLAY_NAME} Lv.${LEVEL}"
 fi
 
 # ── If sprite hidden, show minimal text-only ────────────────
