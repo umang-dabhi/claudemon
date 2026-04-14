@@ -26,20 +26,29 @@ fi
 CC_MODEL="" CC_CONTEXT=""
 if [ -n "$STDIN_DATA" ]; then
   CC_MODEL=$(echo "$STDIN_DATA" | jq -r '.model.display_name // empty' 2>/dev/null)
+  MODEL_ID=$(echo "$STDIN_DATA" | jq -r '.model.id // empty' 2>/dev/null)
 
-  # Context memory: count conversation messages from transcript
+  # Max context tokens based on model
+  MAX_TOKENS=200000
+  echo "$MODEL_ID" | grep -qi "\[1m\]" && MAX_TOKENS=1000000
+
+  # Read actual token usage from transcript JSONL
   TRANSCRIPT=$(echo "$STDIN_DATA" | jq -r '.transcript_path // empty' 2>/dev/null)
   if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
-    # Count message objects in transcript as a rough context indicator
-    MSG_COUNT=$(jq '[.[] | select(.type == "message" or .type == "human" or .type == "assistant")] | length' "$TRANSCRIPT" 2>/dev/null || echo 0)
-    # Rough estimate: ~50 messages fills a 200K context window
-    # (each message averages ~4K tokens including tool calls)
-    MAX_MSGS=50
-    if [ "$MSG_COUNT" -gt 0 ]; then
-      USED_PCT=$(( (MSG_COUNT * 100) / MAX_MSGS ))
+    # Last message's input+cache tokens = current context size
+    CONTEXT_TOKENS=$(tail -20 "$TRANSCRIPT" 2>/dev/null | jq -r 'select(.message.usage) | .message.usage | ((.input_tokens // 0) + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0))' 2>/dev/null | tail -1)
+
+    if [ -n "$CONTEXT_TOKENS" ] && [ "$CONTEXT_TOKENS" != "0" ] && [ "$CONTEXT_TOKENS" != "null" ]; then
+      USED_PCT=$(( (CONTEXT_TOKENS * 100) / MAX_TOKENS ))
       [ "$USED_PCT" -gt 100 ] && USED_PCT=100
-      LEFT_PCT=$(( 100 - USED_PCT ))
-      CC_CONTEXT="${LEFT_PCT}% context"
+
+      # Format: 258K/1M (26%)
+      if [ "$MAX_TOKENS" -ge 1000000 ]; then
+        TOKEN_DISPLAY="$(awk "BEGIN{printf \"%.0fK/%.0fM\", ${CONTEXT_TOKENS}/1000, ${MAX_TOKENS}/1000000}")"
+      else
+        TOKEN_DISPLAY="$(awk "BEGIN{printf \"%.0fK/%.0fK\", ${CONTEXT_TOKENS}/1000, ${MAX_TOKENS}/1000}")"
+      fi
+      CC_CONTEXT="${TOKEN_DISPLAY} (${USED_PCT}%)"
     fi
   fi
 fi
