@@ -5,6 +5,7 @@
 # Reads JSON from stdin, checks if the user mentioned their active Pokemon's name,
 # and writes a fun reaction to status.json.
 # MUST exit 0 always — hooks must never block Claude Code.
+# Cross-platform: works on Linux, macOS, and Windows Git Bash.
 
 # Defensive: do NOT use set -e. We never want to crash.
 # Wrap everything so any unexpected error is swallowed.
@@ -17,7 +18,7 @@ _claudemon_name_react() {
   INPUT=$(cat)
   [ -z "$INPUT" ] && return 0
 
-  local STATE_DIR="$HOME/.claudemon"
+  local STATE_DIR="${HOME:-$USERPROFILE}/.claudemon"
   local STATE_FILE="$STATE_DIR/state.json"
   local STATUS_FILE="$STATE_DIR/status.json"
 
@@ -26,16 +27,16 @@ _claudemon_name_react() {
 
   # ── Get user's prompt text ─────────────────────────────────
   local USER_TEXT
-  USER_TEXT=$(echo "$INPUT" | timeout 2 jq -r '.user_prompt // empty' 2>/dev/null)
+  USER_TEXT=$(echo "$INPUT" | jq -r '.user_prompt // empty' 2>/dev/null)
   [ -z "$USER_TEXT" ] && return 0
 
   # ── Get active Pokemon's nickname or species name ──────────
   local POKEMON_NAME
-  POKEMON_NAME=$(timeout 2 jq -r '.party[] | select(.isActive == true) | .nickname // empty' "$STATE_FILE" 2>/dev/null)
+  POKEMON_NAME=$(jq -r '.party[] | select(.isActive == true) | .nickname // empty' "$STATE_FILE" 2>/dev/null)
 
   if [ -z "$POKEMON_NAME" ]; then
     # No nickname — fall back to the name from status.json
-    POKEMON_NAME=$(timeout 2 jq -r '.name // empty' "$STATUS_FILE" 2>/dev/null)
+    POKEMON_NAME=$(jq -r '.name // empty' "$STATUS_FILE" 2>/dev/null)
   fi
 
   [ -z "$POKEMON_NAME" ] && return 0
@@ -64,8 +65,8 @@ _claudemon_name_react() {
   CURRENT=$(cat "$STATUS_FILE" 2>/dev/null)
   [ -z "$CURRENT" ] && return 0
 
-  echo "$CURRENT" | timeout 2 jq --arg reaction "$REACTION" '. + {reaction: $reaction}' > "${STATUS_FILE}.tmp" 2>/dev/null
-  mv "${STATUS_FILE}.tmp" "$STATUS_FILE" 2>/dev/null
+  echo "$CURRENT" | jq --arg reaction "$REACTION" '. + {reaction: $reaction}' > "${STATUS_FILE}.tmp" 2>/dev/null
+  cp "${STATUS_FILE}.tmp" "$STATUS_FILE" 2>/dev/null && rm -f "${STATUS_FILE}.tmp" 2>/dev/null
 }
 
 # Run the function, swallow all errors, always exit 0

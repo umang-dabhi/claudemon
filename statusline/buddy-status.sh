@@ -4,7 +4,7 @@
 #   LEFT:  model, context remaining, usage, buddy speech
 #   RIGHT: colorscript sprite + name + level (hideable via /buddy hide)
 
-STATE_DIR="$HOME/.claudemon"
+STATE_DIR="${HOME:-$USERPROFILE}/.claudemon"
 STATUS_FILE="$STATE_DIR/status.json"
 CONFIG_FILE="$STATE_DIR/config.json"
 
@@ -94,17 +94,29 @@ GREEN=$'\033[38;2;100;200;100m'
 B=$'\xe2\xa0\x80'
 
 # ── Terminal width ──────────────────────────────────────────
+# Cross-platform: Linux uses /proc, macOS uses tty, Windows uses $COLUMNS
 COLS=0
-PID=$$
-for _ in 1 2 3 4 5; do
-  PID=$(ps -o ppid= -p "$PID" 2>/dev/null | tr -d ' ')
-  [ -z "$PID" ] || [ "$PID" = "1" ] && break
-  PTY=$(readlink "/proc/${PID}/fd/0" 2>/dev/null)
-  if [ -c "$PTY" ] 2>/dev/null; then
-    COLS=$(stty size < "$PTY" 2>/dev/null | awk '{print $2}')
-    [ "${COLS:-0}" -gt 40 ] 2>/dev/null && break
-  fi
-done
+
+# Method 1: Try /proc filesystem (Linux)
+if [ -d "/proc/$$" ]; then
+  PID=$$
+  for _ in 1 2 3 4 5; do
+    PID=$(ps -o ppid= -p "$PID" 2>/dev/null | tr -d ' ')
+    [ -z "$PID" ] || [ "$PID" = "1" ] && break
+    PTY=$(readlink "/proc/${PID}/fd/0" 2>/dev/null)
+    if [ -c "$PTY" ] 2>/dev/null; then
+      COLS=$(stty size < "$PTY" 2>/dev/null | awk '{print $2}')
+      [ "${COLS:-0}" -gt 40 ] 2>/dev/null && break
+    fi
+  done
+fi
+
+# Method 2: Try tput (macOS, most Unix)
+if [ "${COLS:-0}" -lt 40 ] 2>/dev/null && command -v tput >/dev/null 2>&1; then
+  COLS=$(tput cols 2>/dev/null || echo 0)
+fi
+
+# Method 3: Fallback to $COLUMNS env var or default
 [ "${COLS:-0}" -lt 40 ] 2>/dev/null && COLS=${COLUMNS:-0}
 [ "${COLS:-0}" -lt 40 ] 2>/dev/null && COLS=125
 [ "$COLS" -lt 40 ] && exit 0

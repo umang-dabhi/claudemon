@@ -4,6 +4,7 @@
 # Stop hook for Claudemon — extracts buddy comments from Claude's response.
 # Looks for <!-- buddy: ... --> patterns and writes them as reactions to status.json.
 # MUST exit 0 always — hooks must never block Claude Code.
+# Cross-platform: works on Linux, macOS, and Windows Git Bash.
 
 # Defensive: do NOT use set -e. We never want to crash.
 # Wrap everything so any unexpected error is swallowed.
@@ -16,20 +17,21 @@ _claudemon_stop() {
   INPUT=$(cat)
   [ -z "$INPUT" ] && return 0
 
-  local STATE_DIR="$HOME/.claudemon"
+  local STATE_DIR="${HOME:-$USERPROFILE}/.claudemon"
   local STATUS_FILE="$STATE_DIR/status.json"
 
   [ -f "$STATUS_FILE" ] || return 0
 
   # ── Extract the response text ──────────────────────────────
   local RESPONSE_TEXT
-  RESPONSE_TEXT=$(echo "$INPUT" | timeout 2 jq -r '.tool_response.content // empty' 2>/dev/null)
-  [ -z "$RESPONSE_TEXT" ] && RESPONSE_TEXT=$(echo "$INPUT" | timeout 2 jq -r '.tool_response // empty' 2>/dev/null)
+  RESPONSE_TEXT=$(echo "$INPUT" | jq -r '.tool_response.content // empty' 2>/dev/null)
+  [ -z "$RESPONSE_TEXT" ] && RESPONSE_TEXT=$(echo "$INPUT" | jq -r '.tool_response // empty' 2>/dev/null)
   [ -z "$RESPONSE_TEXT" ] && return 0
 
   # ── Look for <!-- buddy: ... --> pattern ───────────────────
+  # Use sed instead of grep -oP for cross-platform compatibility
   local BUDDY_COMMENT
-  BUDDY_COMMENT=$(echo "$RESPONSE_TEXT" | grep -oP '<!-- buddy: \K[^-]+(?= -->)' 2>/dev/null | head -1)
+  BUDDY_COMMENT=$(echo "$RESPONSE_TEXT" | sed -n 's/.*<!-- buddy: \(.*\) -->.*/\1/p' 2>/dev/null | head -1)
   [ -z "$BUDDY_COMMENT" ] && return 0
 
   # Trim trailing whitespace
@@ -40,8 +42,9 @@ _claudemon_stop() {
   CURRENT=$(cat "$STATUS_FILE" 2>/dev/null)
   [ -z "$CURRENT" ] && return 0
 
-  echo "$CURRENT" | timeout 2 jq --arg reaction "$BUDDY_COMMENT" '. + {reaction: $reaction}' > "${STATUS_FILE}.tmp" 2>/dev/null
-  mv "${STATUS_FILE}.tmp" "$STATUS_FILE" 2>/dev/null
+  echo "$CURRENT" | jq --arg reaction "$BUDDY_COMMENT" '. + {reaction: $reaction}' > "${STATUS_FILE}.tmp" 2>/dev/null
+  # Use cp+rm as cross-platform alternative to mv (works on Windows Git Bash)
+  cp "${STATUS_FILE}.tmp" "$STATUS_FILE" 2>/dev/null && rm -f "${STATUS_FILE}.tmp" 2>/dev/null
 }
 
 # Run the function, swallow all errors, always exit 0

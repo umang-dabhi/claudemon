@@ -114,9 +114,9 @@ export const BADGES: readonly Badge[] = [
 
 // ── State File Paths ───────────────────────────────────────
 
-/** Resolved at call time so tests can override HOME */
+/** Resolved at call time so tests can override HOME. Falls back to USERPROFILE on Windows. */
 export function getStateDir(): string {
-  return `${process.env["HOME"] ?? "~"}/.claudemon`;
+  return `${process.env["HOME"] ?? process.env["USERPROFILE"] ?? "~"}/.claudemon`;
 }
 export function getStateFile(): string {
   return `${getStateDir()}/state.json`;

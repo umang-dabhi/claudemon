@@ -180,6 +180,16 @@ async function checkSkill(): Promise<CheckResult> {
 // ── Check 7: Hook Script Executable ──────────────────────────
 
 async function checkHookScript(): Promise<CheckResult> {
+  // Windows doesn't use Unix file permissions
+  if (process.platform === "win32") {
+    try {
+      await access(HOOK_SCRIPT, fsConstants.F_OK);
+      return { label: "Hook script", passed: true, detail: "found (Windows — no chmod needed)" };
+    } catch {
+      return { label: "Hook script", passed: false, detail: "not found" };
+    }
+  }
+
   try {
     await access(HOOK_SCRIPT, fsConstants.X_OK);
     return { label: "Hook script", passed: true, detail: "executable" };
@@ -194,6 +204,29 @@ async function checkHookScript(): Promise<CheckResult> {
     } catch {
       return { label: "Hook script", passed: false, detail: "not found" };
     }
+  }
+}
+
+// ── Check 7b: jq Installed ──────────────────────────────────
+
+async function checkJq(): Promise<CheckResult> {
+  try {
+    const result = spawnSync("jq", ["--version"], { stdio: "pipe" });
+    if (result.error) throw result.error;
+    const output = result.stdout?.toString().trim();
+    return { label: "jq", passed: true, detail: output || "installed" };
+  } catch {
+    const installHint =
+      process.platform === "darwin"
+        ? "brew install jq"
+        : process.platform === "win32"
+          ? "winget install jqlang.jq"
+          : "sudo apt install jq";
+    return {
+      label: "jq",
+      passed: false,
+      detail: `not found — required for status line. Install: ${installHint}`,
+    };
   }
 }
 
@@ -354,6 +387,7 @@ export async function doctor(): Promise<void> {
   const checks: CheckResult[] = [
     await checkVersion(),
     await checkBun(),
+    await checkJq(),
     await checkStateDir(),
     await checkStateFile(),
     await checkMcpServer(),

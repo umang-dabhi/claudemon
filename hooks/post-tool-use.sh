@@ -23,7 +23,7 @@ _claudemon_post_tool_use() {
     RUNTIME="node"
     AWARD_SCRIPT="$PROJECT_DIR/dist/award-xp.mjs"
     COUNTER_SCRIPT="$PROJECT_DIR/dist/increment-counter.mjs"
-  elif [ -x "${HOME}/.bun/bin/bun" ]; then
+  elif [ -x "${HOME:-$USERPROFILE}/.bun/bin/bun" ]; then
     RUNTIME="${HOME}/.bun/bin/bun"
     AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
     COUNTER_SCRIPT="$PROJECT_DIR/src/hooks/increment-counter.ts"
@@ -134,14 +134,20 @@ _claudemon_post_tool_use() {
   fi
 
   # ── Delegate to scripts ─────────────────────────────────────
-  # Use timeout to ensure scripts never block beyond 3s (leaves 2s buffer for Claude Code's 5s limit)
+  # Run in background to never block. Use timeout if available (Linux/macOS), otherwise just background.
 
   if [ -n "$EVENT" ]; then
-    # XP award + counter increment
-    timeout 3 "$RUNTIME" "$AWARD_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    if command -v timeout >/dev/null 2>&1; then
+      timeout 3 "$RUNTIME" "$AWARD_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    else
+      "$RUNTIME" "$AWARD_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    fi
   elif [ -n "$COUNTER" ]; then
-    # Counter-only increment (no XP)
-    timeout 3 "$RUNTIME" "$COUNTER_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    if command -v timeout >/dev/null 2>&1; then
+      timeout 3 "$RUNTIME" "$COUNTER_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    else
+      "$RUNTIME" "$COUNTER_SCRIPT" "$EVENT" "$COUNTER" 2>/dev/null &
+    fi
   fi
 }
 

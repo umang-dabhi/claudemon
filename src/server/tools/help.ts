@@ -90,10 +90,26 @@ export function registerHelpTool(server: McpServer): void {
       lines.push(`\u2502    ${"/buddy unhide       — Show sprite".padEnd(W - 4)}\u2502`);
 
       lines.push(`\u251c${border}\u2524`);
+      lines.push(`\u2502  ${"PREREQUISITES".padEnd(W - 2)}\u2502`);
+      lines.push(`\u2502    ${"Node.js 18+ (or Bun for faster startup)".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"jq — required for status line display".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"  Linux:   sudo apt install jq".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"  macOS:   brew install jq".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"  Windows: winget install jqlang.jq".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502${" ".repeat(W)}\u2502`);
+
+      lines.push(`\u251c${border}\u2524`);
+      lines.push(`\u2502  ${"TROUBLESHOOTING".padEnd(W - 2)}\u2502`);
+      lines.push(`\u2502    ${"Run: claudemon doctor".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"No sprite? Check jq is installed".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502    ${"Stuck? Try: claudemon update".padEnd(W - 4)}\u2502`);
+      lines.push(`\u2502${" ".repeat(W)}\u2502`);
+
+      lines.push(`\u251c${border}\u2524`);
       lines.push(
         `\u2502  ${"Stats: stamina, debugging, stability, velocity, wisdom".padEnd(W - 2)}\u2502`,
       );
-      lines.push(`\u2502  ${"XP is earned automatically as you code!".padEnd(W - 2)}\u2502`);
+      lines.push(`\u2502  ${"905 Pokemon (Gen 1-8) | XP earned as you code!".padEnd(W - 2)}\u2502`);
       lines.push(`\u2514${border}\u2518`);
 
       return {

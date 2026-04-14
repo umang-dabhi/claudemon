@@ -58,8 +58,27 @@ async function checkPrerequisites(): Promise<boolean> {
     ok("Claude Code directory: ~/.claude/");
   } catch {
     fail("Claude Code not found. Install Claude Code first: https://claude.ai/download");
-    console.error("    Expected directory: ~/.claude/");
+    const homeHint = process.platform === "win32" ? "%USERPROFILE%\\.claude\\" : "~/.claude/";
+    console.error(`    Expected directory: ${homeHint}`);
     allGood = false;
+  }
+
+  // Check jq (non-blocking — needed for status line but not core functionality)
+  try {
+    const jqResult = spawnSync("jq", ["--version"], { stdio: "pipe" });
+    if (!jqResult.error) {
+      ok(`jq: ${jqResult.stdout?.toString().trim()}`);
+    } else {
+      throw new Error("no jq");
+    }
+  } catch {
+    const installHint =
+      process.platform === "darwin"
+        ? "brew install jq"
+        : process.platform === "win32"
+          ? "winget install jqlang.jq"
+          : "sudo apt install jq";
+    console.error(`  \u26A0 jq not found (status line won't work). Install: ${installHint}`);
   }
 
   return allGood;
@@ -200,6 +219,10 @@ async function installSkill(): Promise<void> {
 // ── Step 7: Set Script Permissions ───────────────────────────
 
 async function setScriptPermissions(): Promise<void> {
+  if (process.platform === "win32") {
+    ok("Scripts: permissions not needed on Windows");
+    return;
+  }
   await chmod(HOOK_SCRIPT, 0o755);
   ok("Hook script: post-tool-use.sh set executable");
   await chmod(STOP_HOOK_SCRIPT, 0o755);

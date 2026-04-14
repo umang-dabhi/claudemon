@@ -46,9 +46,9 @@ export interface ClaudeSettings {
 
 // ── Constants ────────────────────────────────────────────────
 
-const HOME = process.env["HOME"];
+const HOME = process.env["HOME"] || process.env["USERPROFILE"];
 if (!HOME) {
-  console.error("Error: HOME environment variable is not set.");
+  console.error("Error: HOME (or USERPROFILE on Windows) environment variable is not set.");
   process.exit(1);
 }
 
@@ -81,7 +81,10 @@ export const SERVER_ENTRY_JS_LEGACY = `${PROJECT_DIR}/dist/src/server/index.js`;
 /** Find the best runtime — Bun (fastest) > bundled node > legacy node */
 export function getRuntime(): { command: string; serverEntry: string } {
   // Prefer bun (fastest — native TS, ~120ms startup)
-  const bunCandidates = [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
+  const bunCandidates =
+    process.platform === "win32"
+      ? [`${HOME}\\.bun\\bin\\bun.exe`, `${HOME}/.bun/bin/bun.exe`, `${HOME}/.bun/bin/bun`]
+      : [`${HOME}/.bun/bin/bun`, "/usr/local/bin/bun", "/usr/bin/bun"];
   for (const p of bunCandidates) {
     if (existsSync(p)) {
       return { command: p, serverEntry: SERVER_ENTRY_TS };
