@@ -1,6 +1,6 @@
 ---
 name: buddy
-description: Interact with your Claudemon Pokemon coding companion — show, pet, stats, starter, evolve, catch, party, pokedex, achievements, legendary
+description: Interact with your Claudemon Pokemon coding companion — show, pet, stats, starter, evolve, catch, party, pokedex, achievements, legendary, share
 allowed-tools: mcp__claudemon__*
 ---
 
@@ -57,6 +57,14 @@ This ensures first-time users get the starter selection flow automatically.
 | `settings encounter-speed normal` | `buddy_settings` with setting="encounter-speed", value="normal" — default (250 XP) |
 | `settings encounter-speed slow` | `buddy_settings` with setting="encounter-speed", value="slow" — less interruptions (500 XP) |
 | `settings xp-share N` | `buddy_settings` with setting="xp-share", value="N" — share N% XP to inactive party (0-100) |
+| `share` | `buddy_share` with action="pokemon" — share code for active Pokemon |
+| `share pokemon` | `buddy_share` with action="pokemon" — share code for active Pokemon |
+| `share pokemon N` | `buddy_share` with action="pokemon", slot=N — share code for party slot N |
+| `share party` | `buddy_share` with action="party" — share code for entire trainer profile |
+| `share party <name>` | `buddy_share` with action="party", name="<name>" — share with custom display name |
+| `share pokemon N <name>` | `buddy_share` with action="pokemon", slot=N, name="<name>" — share with custom name |
+| `compare <code>` | `buddy_share` with action="compare", code="<code>" — compare against a share code |
+| `compare <code> N` | `buddy_share` with action="compare", code="<code>", slot=N — compare using party slot N |
 | `help` | List all available /buddy commands |
 
 Pass $ARGUMENTS to determine which subcommand to route to.

@@ -16,4 +16,4 @@ Thumbs.db
 bun.lockb
 
 # State (user-specific, lives in ~/.claudemon/)
-state/
+/state/

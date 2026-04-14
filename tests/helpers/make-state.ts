@@ -70,6 +70,7 @@ export function makeState(overrides: Partial<PlayerState> = {}): PlayerState {
     lastTrainedAt: 0,
     lastPlayedAt: 0,
     pendingQuiz: null,
+    shareStats: { wins: 0, losses: 0, ties: 0 },
     ...overrides,
   };
 }

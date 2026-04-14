@@ -172,6 +172,15 @@ export interface PlayerState {
   lastTrainedAt: number; // Timestamp of last train action
   lastPlayedAt: number; // Timestamp of last play (quiz completed) action
   pendingQuiz: PendingQuiz | null; // Active quiz awaiting answer
+  shareStats: ShareStats; // Win/loss/tie record from compare
+}
+
+// ── Share Stats ───────────────────────────────────────────
+
+export interface ShareStats {
+  wins: number;
+  losses: number;
+  ties: number;
 }
 
 // ── Pokedex ────────────────────────────────────────────────
