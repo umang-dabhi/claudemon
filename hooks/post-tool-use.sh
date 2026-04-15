@@ -12,21 +12,42 @@ _claudemon_post_tool_use() {
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
   PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+  # ── Augment PATH for IDE extensions (VS Code, Cursor) ──────
+  # IDE extensions don't source ~/.bashrc, so nvm/bun may not be in PATH.
+  if [ -d "${HOME:-$USERPROFILE}/.bun/bin" ]; then
+    export PATH="${HOME:-$USERPROFILE}/.bun/bin:$PATH"
+  fi
+  if [ -d "${HOME:-$USERPROFILE}/.nvm/versions/node" ]; then
+    _NVM_NODE_DIR=$(ls -d "${HOME:-$USERPROFILE}"/.nvm/versions/node/*/bin 2>/dev/null | tail -1)
+    if [ -n "$_NVM_NODE_DIR" ]; then
+      export PATH="$_NVM_NODE_DIR:$PATH"
+    fi
+  fi
+  # Also check for fnm, volta, and other node version managers
+  [ -d "${HOME:-$USERPROFILE}/.local/share/fnm/aliases/default/bin" ] && export PATH="${HOME:-$USERPROFILE}/.local/share/fnm/aliases/default/bin:$PATH"
+  [ -d "${HOME:-$USERPROFILE}/.volta/bin" ] && export PATH="${HOME:-$USERPROFILE}/.volta/bin:$PATH"
+
   # Find runtime and script paths
   # Prefer bundled ESM (faster — no TS transpilation), fall back to bun+TS source
   RUNTIME=""
   AWARD_SCRIPT=""
   COUNTER_SCRIPT=""
 
-  if [ -f "$PROJECT_DIR/dist/award-xp.mjs" ]; then
+  if [ -f "$PROJECT_DIR/dist/award-xp.mjs" ] && command -v node >/dev/null 2>&1; then
     # Bundled ESM — use node (fastest)
     RUNTIME="node"
     AWARD_SCRIPT="$PROJECT_DIR/dist/award-xp.mjs"
     COUNTER_SCRIPT="$PROJECT_DIR/dist/increment-counter.mjs"
   elif [ -x "${HOME:-$USERPROFILE}/.bun/bin/bun" ]; then
+    # Absolute path — works even without PATH
     RUNTIME="${HOME}/.bun/bin/bun"
-    AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
-    COUNTER_SCRIPT="$PROJECT_DIR/src/hooks/increment-counter.ts"
+    if [ -f "$PROJECT_DIR/dist/award-xp.mjs" ]; then
+      AWARD_SCRIPT="$PROJECT_DIR/dist/award-xp.mjs"
+      COUNTER_SCRIPT="$PROJECT_DIR/dist/increment-counter.mjs"
+    else
+      AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
+      COUNTER_SCRIPT="$PROJECT_DIR/src/hooks/increment-counter.ts"
+    fi
   elif command -v bun >/dev/null 2>&1; then
     RUNTIME="bun"
     AWARD_SCRIPT="$PROJECT_DIR/src/hooks/award-xp.ts"
