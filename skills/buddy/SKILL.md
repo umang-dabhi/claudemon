@@ -69,4 +69,15 @@ This ensures first-time users get the starter selection flow automatically.
 | `help` | `buddy_help` — show categorized command reference |
 
 Pass $ARGUMENTS to determine which subcommand to route to.
-Display all tool output EXACTLY as returned — do not summarize or modify the output.
+
+## CRITICAL: Output Display Rules
+
+After calling any buddy tool, you MUST:
+1. Copy the FULL tool result text into your response as visible output to the user
+2. Do NOT just say "Called claudemon" — the user needs to SEE the actual result
+3. Do NOT summarize, rephrase, or omit any part of the tool output
+4. Display the tool output EXACTLY as returned, preserving all formatting
+5. If the tool returns text with happiness, XP, reactions, stats, or any content — print ALL of it
+
+Example of WRONG behavior: just showing "Called claudemon" with no visible output
+Example of CORRECT behavior: showing the full text like "*Pikachu's cheeks spark warmly*\n\nHappiness: 220 -> 225\n+2 XP"
