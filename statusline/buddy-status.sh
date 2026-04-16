@@ -109,13 +109,12 @@ if [ "$ENCOUNTER_CYCLE" -ge 3 ]; then
   ENCOUNTER_VISIBLE=false
 fi
 
-# Sprite jitter: shift 0-2 spaces left/right, changes every 2s
+# Sprite jitter: shift 0-2 spaces LEFT only every 2 seconds
+# Right shifts clip against terminal edge, so only shift left (inward)
 JITTER_SEED=$(( NOW_SEC / 2 ))
-# Simple pseudo-random from timestamp: produces 0,1,2 pattern
-JITTER_OFFSET=$(( (JITTER_SEED * 7 + 3) % 5 - 2 ))
-# Clamp to -2..+2
-[ "$JITTER_OFFSET" -lt -2 ] && JITTER_OFFSET=-2
-[ "$JITTER_OFFSET" -gt 2 ] && JITTER_OFFSET=2
+JITTER_OFFSET=$(( (JITTER_SEED * 7 + 3) % 3 ))
+# Result: 0, 1, or 2 extra spaces of right margin (sprite shifts left)
+
 
 # ── Terminal width ──────────────────────────────────────────
 # Cross-platform: Linux uses /proc, macOS uses tty, Windows uses $COLUMNS
@@ -330,11 +329,10 @@ RIGHT_MARGIN=4
 RIGHT_PAD=$(( COLS - ART_W - RIGHT_MARGIN ))
 [ "$RIGHT_PAD" -lt 0 ] && RIGHT_PAD=0
 
-# Jittered padding — only for sprite lines, name line stays fixed
-JITTERED_MARGIN=$(( RIGHT_MARGIN + JITTER_OFFSET ))
-[ "$JITTERED_MARGIN" -lt 2 ] && JITTERED_MARGIN=2
-JITTER_PAD=$(( COLS - ART_W - JITTERED_MARGIN ))
-[ "$JITTER_PAD" -lt 0 ] && JITTER_PAD=0
+# Jittered padding for sprite lines only (name line uses fixed RIGHT_PAD)
+# JITTER_OFFSET is 0-2, adding to margin pushes sprite left
+SPRITE_PAD=$(( COLS - ART_W - RIGHT_MARGIN - JITTER_OFFSET ))
+[ "$SPRITE_PAD" -lt 0 ] && SPRITE_PAD=0
 
 # Build left array — line 1: model+context, line 2: update notice (if any)
 LEFT_LINES=()
@@ -347,9 +345,9 @@ while [ ${#LEFT_LINES[@]} -lt "$TOTAL_LINES" ]; do
 done
 LEFT_COUNT=${#LEFT_LINES[@]}
 
-# ── Build full right-side spacer (jittered for sprite animation) ──
+# ── Build full right-side spacer (jittered for sprite) ───────
 FULL_SPACER=""
-for (( s=0; s<JITTER_PAD; s++ )); do FULL_SPACER+="$B"; done
+for (( s=0; s<SPRITE_PAD; s++ )); do FULL_SPACER+="$B"; done
 
 # ── Output name line ABOVE sprite — with speech before name ──
 SPEECH_TEXT=""
@@ -374,7 +372,7 @@ for (( i=0; i<SPRITE_COUNT; i++ )); do
   right="${SPRITE_LINES[$i]}${NC}"
 
   if [ -n "$left" ]; then
-    gap=$(( JITTER_PAD - left_w ))
+    gap=$(( SPRITE_PAD - left_w ))
     [ "$gap" -lt 1 ] && gap=1
     GAP_STR=""
     for (( g=0; g<gap; g++ )); do GAP_STR+="$B"; done
