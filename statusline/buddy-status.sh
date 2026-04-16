@@ -353,7 +353,7 @@ RIGHT_PAD=$(( COLS - ART_W - RIGHT_MARGIN ))
 SPRITE_PAD=$(( COLS - ART_W - RIGHT_MARGIN - JITTER_OFFSET ))
 [ "$SPRITE_PAD" -lt 0 ] && SPRITE_PAD=0
 
-# Build left array — line 1: model+context, line 2: update notice (if any)
+# Build left array — line 1: model+context, line 2: update notification
 LEFT_LINES=()
 LEFT_LINES+=("$LEFT_1")  # line 1: model · context
 LEFT_LINES+=("$LEFT_2")  # line 2: update notification (or empty)
@@ -368,19 +368,23 @@ LEFT_COUNT=${#LEFT_LINES[@]}
 FULL_SPACER=""
 for (( s=0; s<SPRITE_PAD; s++ )); do FULL_SPACER+="$B"; done
 
-# ── Output name line ABOVE sprite — with speech before name ──
-SPEECH_TEXT=""
-SPEECH_VISIBLE_W=0
+# ── Output name line — speech left-aligned, name right-aligned ──
+INFO_W=${#INFO_LINE}
+SPEECH_OUT=""
+SPEECH_OUT_W=0
+SPEECH_LEFT_PAD=50
 if [ -n "$SPEECH" ]; then
-  SPEECH_TEXT="${SPEECH_COLOR}${SPEECH}${NC}  "
-  SPEECH_VISIBLE_W=$(( ${#SPEECH} + 2 ))
+  SPEECH_PREFIX=""
+  for (( s=0; s<SPEECH_LEFT_PAD; s++ )); do SPEECH_PREFIX+="$B"; done
+  SPEECH_OUT="${SPEECH_PREFIX}${SPEECH_COLOR}${SPEECH}${NC}"
+  SPEECH_OUT_W=$(( ${#SPEECH} + SPEECH_LEFT_PAD ))
 fi
 
-NAME_PAD=$(( RIGHT_PAD - SPEECH_VISIBLE_W ))
-[ "$NAME_PAD" -lt 0 ] && NAME_PAD=0
-NAME_SPACER=""
-for (( s=0; s<NAME_PAD; s++ )); do NAME_SPACER+="$B"; done
-echo "${NAME_SPACER}${SPEECH_TEXT}${INFO_LINE}"
+NAME_GAP=$(( COLS - SPEECH_OUT_W - INFO_W - RIGHT_MARGIN ))
+[ "$NAME_GAP" -lt 1 ] && NAME_GAP=1
+NAME_GAP_STR=""
+for (( s=0; s<NAME_GAP; s++ )); do NAME_GAP_STR+="$B"; done
+echo "${SPEECH_OUT}${NAME_GAP_STR}${INFO_LINE}"
 
 # ── Output sprite lines (right-aligned with jitter, left content merged) ──
 for (( i=0; i<SPRITE_COUNT; i++ )); do
