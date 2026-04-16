@@ -6,12 +6,10 @@
 import { describe, expect, test } from "bun:test";
 import {
   shouldTriggerEncounter,
-  getEncounterTypes,
   generateEncounter,
   canCatch,
   shouldBonusEncounter,
   shouldDiversityBonus,
-  getTimeOfDayBias,
 } from "../../src/engine/encounters.js";
 import type { EncounterContext } from "../../src/engine/encounters.js";
 import { POKEMON_BY_ID } from "../../src/engine/pokemon-data.js";
@@ -115,124 +113,7 @@ describe("shouldDiversityBonus", () => {
   });
 });
 
-// ── getTimeOfDayBias Tests ───────────────────────────────────
-
-describe("getTimeOfDayBias", () => {
-  test("returns Ghost/Dark at night (22-4)", () => {
-    expect(getTimeOfDayBias(22)).toEqual(["Ghost", "Dark"]);
-    expect(getTimeOfDayBias(23)).toEqual(["Ghost", "Dark"]);
-    expect(getTimeOfDayBias(0)).toEqual(["Ghost", "Dark"]);
-    expect(getTimeOfDayBias(3)).toEqual(["Ghost", "Dark"]);
-  });
-
-  test("returns Grass/Fairy in morning (5-8)", () => {
-    expect(getTimeOfDayBias(5)).toEqual(["Grass", "Fairy"]);
-    expect(getTimeOfDayBias(8)).toEqual(["Grass", "Fairy"]);
-  });
-
-  test("returns Fire/Steel at midday (12-13)", () => {
-    expect(getTimeOfDayBias(12)).toEqual(["Fire", "Steel"]);
-    expect(getTimeOfDayBias(13)).toEqual(["Fire", "Steel"]);
-  });
-
-  test("returns Water/Flying in evening (17-19)", () => {
-    expect(getTimeOfDayBias(17)).toEqual(["Water", "Flying"]);
-    expect(getTimeOfDayBias(19)).toEqual(["Water", "Flying"]);
-  });
-
-  test("returns empty array for non-biased hours", () => {
-    expect(getTimeOfDayBias(10)).toEqual([]);
-    expect(getTimeOfDayBias(15)).toEqual([]);
-    expect(getTimeOfDayBias(21)).toEqual([]);
-  });
-});
-
-// ── getEncounterTypes Tests ──────────────────────────────────
-
-describe("getEncounterTypes", () => {
-  test("commit returns Normal and Flying types", () => {
-    const types = getEncounterTypes("commit");
-    expect(types).toContain("Normal");
-    expect(types).toContain("Flying");
-  });
-
-  test("test_pass returns Fighting and Normal types", () => {
-    const types = getEncounterTypes("test_pass");
-    expect(types).toContain("Fighting");
-    expect(types).toContain("Normal");
-  });
-
-  test("bug_fix returns Bug and Poison types", () => {
-    const types = getEncounterTypes("bug_fix");
-    expect(types).toContain("Bug");
-    expect(types).toContain("Poison");
-  });
-
-  test("large_refactor returns Psychic and Dragon types", () => {
-    const types = getEncounterTypes("large_refactor");
-    expect(types).toContain("Psychic");
-    expect(types).toContain("Dragon");
-  });
-
-  test("build_success returns Fire and Rock types", () => {
-    const types = getEncounterTypes("build_success");
-    expect(types).toContain("Fire");
-    expect(types).toContain("Rock");
-  });
-
-  test("daily_streak returns Water and Electric types", () => {
-    const types = getEncounterTypes("daily_streak");
-    expect(types).toContain("Water");
-    expect(types).toContain("Electric");
-  });
-
-  test("all event types return valid Pokemon types", () => {
-    const validTypes: PokemonType[] = [
-      "Normal",
-      "Fire",
-      "Water",
-      "Electric",
-      "Grass",
-      "Ice",
-      "Fighting",
-      "Poison",
-      "Ground",
-      "Flying",
-      "Psychic",
-      "Bug",
-      "Rock",
-      "Ghost",
-      "Dragon",
-      "Steel",
-      "Dark",
-      "Fairy",
-    ];
-
-    const eventTypes: XpEventType[] = [
-      "commit",
-      "test_pass",
-      "test_written",
-      "build_success",
-      "bug_fix",
-      "lint_fix",
-      "file_create",
-      "file_edit",
-      "search",
-      "large_refactor",
-      "session_start",
-      "daily_streak",
-      "pet",
-    ];
-
-    for (const eventType of eventTypes) {
-      const types = getEncounterTypes(eventType);
-      expect(types.length).toBeGreaterThan(0);
-      for (const type of types) {
-        expect(validTypes).toContain(type);
-      }
-    }
-  });
-});
+// ── Encounter System Tests (100% random, no activity-type mapping) ──
 
 // ── generateEncounter Tests ──────────────────────────────────
 

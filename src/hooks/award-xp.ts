@@ -21,7 +21,6 @@ import {
   generateEncounter,
   shouldBonusEncounter,
   shouldDiversityBonus,
-  getTimeOfDayBias,
 } from "../engine/encounters.js";
 import type { EncounterContext } from "../engine/encounters.js";
 import { calculateMood } from "../engine/mood.js";
@@ -138,7 +137,6 @@ const evolutionReady = checkEvolution(pokemon, state) !== null;
 // Build encounter context for the enhanced trigger system
 const encounterSpeed = state.config.encounterSpeed ?? "normal";
 const currentHour = new Date().getHours();
-const timeOfDayTypes = getTimeOfDayBias(currentHour);
 
 const encounterCtx: EncounterContext = {
   xpSinceLastEncounter: (state.xpSinceLastEncounter ?? 0) + xpEvent.xp,
@@ -153,7 +151,7 @@ state.xpSinceLastEncounter = encounterCtx.xpSinceLastEncounter;
 let encounterTriggered = false;
 
 if (shouldTriggerEncounter(encounterCtx) && !state.pendingEncounter) {
-  const encounter = generateEncounter(eventType, state, timeOfDayTypes);
+  const encounter = generateEncounter(eventType, state);
   if (encounter) {
     state.pendingEncounter = encounter;
     state.xpSinceLastEncounter = 0;
@@ -163,7 +161,7 @@ if (shouldTriggerEncounter(encounterCtx) && !state.pendingEncounter) {
     // 10% chance for a bonus encounter after a regular one
     // (bonus replaces the pending encounter with a second roll)
     if (shouldBonusEncounter()) {
-      const bonusEncounter = generateEncounter(eventType, state, timeOfDayTypes);
+      const bonusEncounter = generateEncounter(eventType, state);
       if (bonusEncounter) {
         // The bonus encounter replaces the first; first is already set as pending
         // In practice the player still sees one encounter per trigger,
@@ -177,7 +175,7 @@ if (shouldTriggerEncounter(encounterCtx) && !state.pendingEncounter) {
 // Tool diversity bonus: if 3+ unique tool types used recently and no pending encounter,
 // grant an extra encounter opportunity
 if (!encounterTriggered && !state.pendingEncounter && shouldDiversityBonus(state.recentToolTypes)) {
-  const diversityEncounter = generateEncounter(eventType, state, timeOfDayTypes);
+  const diversityEncounter = generateEncounter(eventType, state);
   if (diversityEncounter) {
     state.pendingEncounter = diversityEncounter;
     state.xpSinceLastEncounter = 0;

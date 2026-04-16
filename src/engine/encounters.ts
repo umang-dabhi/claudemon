@@ -1,8 +1,8 @@
 /**
  * Wild encounter system.
- * Pokemon appear based on coding activity type, streak bonuses,
- * tool diversity, and time-of-day biases. Catch eligibility is
- * determined by the active Pokemon's stats and level.
+ * 100% random encounters with Pokedex-aware smart weighting.
+ * No activity-type or time-of-day bias — any Pokemon can appear anytime.
+ * Unseen types, gens, and species are boosted to fill the Pokedex faster.
  */
 
 import type {
@@ -15,33 +15,11 @@ import type {
   CodingStat,
   RarityTier,
 } from "./types.js";
+import { POKEMON_TYPES } from "./types.js";
 import { ENCOUNTER_THRESHOLDS } from "./constants.js";
 import type { EncounterSpeed } from "./constants.js";
 import { POKEMON_BY_ID } from "./pokemon-data.js";
-import { TYPE_POOLS } from "./encounter-pool.js";
-
-// ── Activity to Pokemon Type Mapping ──────────────────────────
-
-const ENCOUNTER_TYPE_MAP: Readonly<Record<XpEventType, readonly PokemonType[]>> = {
-  commit: ["Normal", "Flying"],
-  test_pass: ["Fighting", "Normal"],
-  test_written: ["Fighting", "Normal"],
-  build_success: ["Fire", "Rock"],
-  bug_fix: ["Bug", "Poison"],
-  lint_fix: ["Bug", "Poison"],
-  file_create: ["Normal", "Ground"],
-  file_edit: ["Normal", "Ground"],
-  search: ["Flying", "Ground"],
-  large_refactor: ["Psychic", "Dragon"],
-  session_start: ["Grass", "Fairy"],
-  daily_streak: ["Water", "Electric"],
-  pet: ["Normal", "Fairy"],
-};
-
-/** Maps an XP event type to the Pokemon types that can appear. */
-export function getEncounterTypes(eventType: XpEventType): readonly PokemonType[] {
-  return ENCOUNTER_TYPE_MAP[eventType];
-}
+import { ALL_WILD_POOL, getGeneration, GEN_RANGES } from "./encounter-pool.js";
 
 // ── Encounter Context ─────────────────────────────────────────
 
@@ -49,8 +27,8 @@ export interface EncounterContext {
   xpSinceLastEncounter: number;
   encounterSpeed: EncounterSpeed;
   currentStreak: number;
-  recentToolTypes: string[]; // tool types used recently
-  currentHour: number; // 0-23
+  recentToolTypes: string[];
+  currentHour: number;
 }
 
 // ── Encounter Trigger ─────────────────────────────────────────
@@ -62,14 +40,10 @@ export interface EncounterContext {
  */
 export function shouldTriggerEncounter(ctx: EncounterContext): boolean {
   const threshold = ENCOUNTER_THRESHOLDS[ctx.encounterSpeed];
-
-  // Streak bonus: 7+ day streak = halve the threshold
   const streakMultiplier = ctx.currentStreak >= 7 ? 0.5 : 1;
   const effectiveThreshold = Math.floor(threshold * streakMultiplier);
 
-  if (ctx.xpSinceLastEncounter < effectiveThreshold) return false;
-
-  return true;
+  return ctx.xpSinceLastEncounter >= effectiveThreshold;
 }
 
 /** Check for bonus encounter (10% chance after a regular encounter). */
@@ -83,20 +57,8 @@ export function shouldDiversityBonus(recentToolTypes: string[]): boolean {
   return uniqueTypes.size >= 3;
 }
 
-// ── Time-of-Day Bias ──────────────────────────────────────────
-
-/** Get time-of-day type biases for encounter generation. */
-export function getTimeOfDayBias(hour: number): PokemonType[] {
-  if (hour >= 22 || hour < 5) return ["Ghost", "Dark"]; // Night: Ghost/Dark types
-  if (hour >= 5 && hour < 9) return ["Grass", "Fairy"]; // Morning: Grass/Fairy types
-  if (hour >= 12 && hour < 14) return ["Fire", "Steel"]; // Midday: Fire/Steel types
-  if (hour >= 17 && hour < 20) return ["Water", "Flying"]; // Evening: Water types
-  return []; // No bias
-}
-
 // ── Rarity Weights ────────────────────────────────────────────
 
-/** Relative weights for rarity-based selection. Higher = more likely to appear. */
 const RARITY_WEIGHTS: Readonly<Record<"common" | "uncommon" | "rare", number>> = {
   common: 70,
   uncommon: 25,
@@ -105,10 +67,6 @@ const RARITY_WEIGHTS: Readonly<Record<"common" | "uncommon" | "rare", number>> =
 
 // ── Catch Condition Mapping ───────────────────────────────────
 
-/**
- * Stat most relevant to each Pokemon type for catch condition evaluation.
- * Used for uncommon+ encounters to determine the required stat.
- */
 const TYPE_TO_STAT: Readonly<Record<PokemonType, CodingStat>> = {
   Normal: "velocity",
   Fire: "debugging",
@@ -130,7 +88,6 @@ const TYPE_TO_STAT: Readonly<Record<PokemonType, CodingStat>> = {
   Fairy: "wisdom",
 };
 
-/** Minimum stat thresholds by rarity tier. */
 const RARITY_STAT_THRESHOLD: Readonly<Record<RarityTier, number>> = {
   common: 0,
   uncommon: 20,
@@ -139,7 +96,6 @@ const RARITY_STAT_THRESHOLD: Readonly<Record<RarityTier, number>> = {
   mythical: 80,
 };
 
-/** Minimum Pokemon level required to catch by rarity tier. */
 const RARITY_LEVEL_THRESHOLD: Readonly<Record<RarityTier, number>> = {
   common: 1,
   uncommon: 10,
@@ -150,7 +106,6 @@ const RARITY_LEVEL_THRESHOLD: Readonly<Record<RarityTier, number>> = {
 
 // ── Catch Condition ───────────────────────────────────────────
 
-/** Get the catch condition for a Pokemon based on its rarity. */
 export function getCatchCondition(pokemonId: number): CatchCondition {
   const pokemon = POKEMON_BY_ID.get(pokemonId);
   if (!pokemon) {
@@ -161,75 +116,138 @@ export function getCatchCondition(pokemonId: number): CatchCondition {
   const requiredLevel = RARITY_LEVEL_THRESHOLD[rarity];
   const minStatValue = RARITY_STAT_THRESHOLD[rarity];
 
-  // Common Pokemon have no stat requirement
   if (rarity === "common") {
     return { requiredStat: null, minStatValue: 0, requiredLevel };
   }
 
-  // Use the primary type to determine which stat is required
   const primaryType = pokemon.types[0];
   const requiredStat = TYPE_TO_STAT[primaryType];
 
   return { requiredStat, minStatValue, requiredLevel };
 }
 
-// ── Encounter Generation ──────────────────────────────────────
+// ── Pokedex Analysis ──────────────────────────────────────────
+
+/** Count how many caught Pokemon the player has of each type. */
+function getTypeCounts(state: PlayerState): Map<PokemonType, number> {
+  const counts = new Map<PokemonType, number>();
+  for (const t of POKEMON_TYPES) counts.set(t, 0);
+
+  for (const [idStr, entry] of Object.entries(state.pokedex.entries)) {
+    if (!entry.caught) continue;
+    const pokemon = POKEMON_BY_ID.get(Number(idStr));
+    if (!pokemon) continue;
+    for (const t of pokemon.types) {
+      if (t !== undefined) counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/** Count how many caught Pokemon the player has from each generation. */
+function getGenCounts(state: PlayerState): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const { gen } of GEN_RANGES) counts.set(gen, 0);
+
+  for (const [idStr, entry] of Object.entries(state.pokedex.entries)) {
+    if (!entry.caught) continue;
+    const gen = getGeneration(Number(idStr));
+    counts.set(gen, (counts.get(gen) ?? 0) + 1);
+  }
+  return counts;
+}
+
+// ── Smart Candidate Pool ──────────────────────────────────────
 
 /**
- * Collect all candidate Pokemon IDs for a set of types, respecting
- * ownership rules and rarity constraints.
+ * Build a weighted candidate pool from ALL wild-eligible Pokemon.
+ * Weighting considers:
+ * - Rarity (common 70, uncommon 25, rare 5)
+ * - Unseen species boost (2x if not seen, 4x in early game)
+ * - Type diversity (3x if player has 0 caught of this type)
+ * - Gen diversity (2x if player has < 3 caught from this gen)
+ * - 10% "same again" chance (pure random, no diversity boosts)
  */
-function buildCandidatePool(
-  types: readonly PokemonType[],
-  state: PlayerState,
-): { id: number; weight: number }[] {
+function buildSmartPool(state: PlayerState): { id: number; weight: number }[] {
   const candidates: { id: number; weight: number }[] = [];
-  const seen = new Set<number>();
 
-  // Determine the player's starter Pokemon ID
   const starterPokemon = [...state.party, ...state.pcBox].find((p) => p.isStarter);
   const starterPokemonId = starterPokemon?.pokemonId ?? -1;
 
-  // Set of already-caught Pokemon IDs (for duplicate filtering)
   const caughtIds = new Set<number>();
+  const seenIds = new Set<number>();
   for (const [idStr, entry] of Object.entries(state.pokedex.entries)) {
-    if (entry.caught) {
-      caughtIds.add(Number(idStr));
-    }
+    const id = Number(idStr);
+    if (entry.caught) caughtIds.add(id);
+    if (entry.seen) seenIds.add(id);
   }
 
-  for (const pokemonType of types) {
-    const pool = TYPE_POOLS.get(pokemonType);
-    if (!pool) continue;
+  const totalCaught = state.pokedex.totalCaught ?? 0;
+  const isEarlyGame = totalCaught < 50;
 
-    for (const rarity of ["common", "uncommon", "rare"] as const) {
-      const ids = pool[rarity];
-      const weight = RARITY_WEIGHTS[rarity];
+  // 10% chance: pure random (no diversity boosting)
+  const seed = Math.floor(Date.now() / 1000);
+  const sameAgainRoll = seededRandom(seed + 99);
+  const applyDiversity = sameAgainRoll >= 0.1;
 
-      for (const id of ids) {
-        // Skip if already added from another type overlap
-        if (seen.has(id)) continue;
-        seen.add(id);
+  // Pre-compute diversity data only when needed
+  let typeCounts: Map<PokemonType, number> | null = null;
+  let genCounts: Map<number, number> | null = null;
+  if (applyDiversity) {
+    typeCounts = getTypeCounts(state);
+    genCounts = getGenCounts(state);
+  }
 
-        // Exclude the player's starter from wild encounters
-        if (id === starterPokemonId) continue;
+  for (const rarity of ["common", "uncommon", "rare"] as const) {
+    const ids = ALL_WILD_POOL[rarity];
+    const baseWeight = RARITY_WEIGHTS[rarity];
 
-        // Common Pokemon: always available, duplicates allowed
-        // Uncommon+: skip if already caught
-        if (rarity !== "common" && caughtIds.has(id)) continue;
+    for (const id of ids) {
+      // Exclude starter
+      if (id === starterPokemonId) continue;
 
-        candidates.push({ id, weight });
+      // Uncommon+: skip if already caught (one-time only)
+      if (rarity !== "common" && caughtIds.has(id)) continue;
+
+      let weight = baseWeight;
+
+      if (applyDiversity) {
+        const pokemon = POKEMON_BY_ID.get(id);
+        if (pokemon) {
+          // Unseen species boost
+          if (!seenIds.has(id)) {
+            weight *= isEarlyGame ? 4 : 2;
+          }
+
+          // Type diversity: boost types player hasn't caught much
+          const primaryType = pokemon.types[0];
+          const typeCount = typeCounts!.get(primaryType) ?? 0;
+          if (typeCount === 0) {
+            weight *= 3; // Never caught this type
+          } else if (typeCount < 3) {
+            weight *= 1.5; // Few of this type
+          }
+
+          // Gen diversity: boost underrepresented generations
+          const gen = getGeneration(id);
+          const genCount = genCounts!.get(gen) ?? 0;
+          if (genCount === 0) {
+            weight *= 2; // Never caught from this gen
+          } else if (genCount < 3) {
+            weight *= 1.3; // Few from this gen
+          }
+        }
       }
+
+      candidates.push({ id, weight: Math.round(weight) });
     }
   }
 
   return candidates;
 }
 
-/**
- * Deterministic pseudo-random number generator seeded by the current second.
- * Uses a simple mulberry32 approach for reproducibility within the same second.
- */
+// ── PRNG ──────────────────────────────────────────────────────
+
 function seededRandom(seed: number): number {
   let t = (seed + 0x6d2b79f5) | 0;
   t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -237,10 +255,6 @@ function seededRandom(seed: number): number {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
-/**
- * Select a Pokemon ID from the weighted candidate pool using a deterministic seed.
- * Returns null if the pool is empty.
- */
 function weightedSelect(
   candidates: readonly { id: number; weight: number }[],
   seed: number,
@@ -258,19 +272,15 @@ function weightedSelect(
     }
   }
 
-  // Fallback to last candidate (floating-point edge case)
   return candidates[candidates.length - 1]!.id;
 }
 
-/**
- * Determine the level of a wild encounter Pokemon.
- * Scales with the player's strongest Pokemon level, with some variance.
- */
+// ── Level Determination ───────────────────────────────────────
+
 function determineEncounterLevel(state: PlayerState, seed: number): number {
   const allPokemon = [...state.party, ...state.pcBox];
   const maxLevel = allPokemon.reduce((max, p) => Math.max(max, p.level), 1);
 
-  // Wild Pokemon appear at 60-100% of the player's max level, minimum 2
   const minLevel = Math.max(2, Math.floor(maxLevel * 0.6));
   const range = Math.max(1, maxLevel - minLevel + 1);
   const level = minLevel + Math.floor(seededRandom(seed + 7) * range);
@@ -278,31 +288,22 @@ function determineEncounterLevel(state: PlayerState, seed: number): number {
   return Math.min(level, 100);
 }
 
+// ── Encounter Generation ──────────────────────────────────────
+
 /**
- * Generate a wild encounter based on the activity type.
- * Picks a Pokemon from the matching type pool, weighted by rarity.
- * If time-of-day bias types are provided, there is a 40% chance to
- * use those types instead of the activity-based types.
- * Excludes Pokemon already in the player's party/box (unless common tier).
- * Returns null if no eligible Pokemon found.
+ * Generate a wild encounter — 100% random with Pokedex-aware weighting.
+ * No activity-type or time-of-day bias. Any Pokemon can appear anytime.
+ * Unseen types, gens, and species are boosted to fill the Pokedex faster.
+ *
+ * The eventType parameter is kept for API compatibility but is not used
+ * for type selection.
  */
 export function generateEncounter(
-  eventType: XpEventType,
+  _eventType: XpEventType,
   state: PlayerState,
-  timeOfDayTypes?: readonly PokemonType[],
+  _timeOfDayTypes?: readonly PokemonType[],
 ): WildEncounter | null {
-  let types = getEncounterTypes(eventType);
-
-  // 40% chance to use time-of-day biased types if available
-  if (timeOfDayTypes && timeOfDayTypes.length > 0) {
-    const seed = Math.floor(Date.now() / 1000);
-    const biasRoll = seededRandom(seed + 42);
-    if (biasRoll < 0.4) {
-      types = timeOfDayTypes;
-    }
-  }
-
-  const candidates = buildCandidatePool(types, state);
+  const candidates = buildSmartPool(state);
 
   if (candidates.length === 0) return null;
 
@@ -319,10 +320,6 @@ export function generateEncounter(
 
 // ── Catch Evaluation ──────────────────────────────────────────
 
-/**
- * Check if the active Pokemon can catch the encountered Pokemon.
- * Based on catch rate, required stats, and level.
- */
 export function canCatch(
   encounter: WildEncounter,
   activePokemon: OwnedPokemon,
@@ -334,7 +331,6 @@ export function canCatch(
 
   const { requiredStat, minStatValue, requiredLevel } = encounter.catchCondition;
 
-  // Check level requirement
   if (activePokemon.level < requiredLevel) {
     return {
       success: false,
@@ -342,7 +338,6 @@ export function canCatch(
     };
   }
 
-  // Check stat requirement
   if (requiredStat !== null) {
     const currentStat = activePokemon.codingStats[requiredStat];
     if (currentStat < minStatValue) {
@@ -354,7 +349,6 @@ export function canCatch(
     }
   }
 
-  // Requirements met — roll against catch rate
   const seed = Math.floor(Date.now() / 1000);
   const roll = seededRandom(seed + encounter.pokemonId) * 255;
   const success = pokemon.catchRate > roll;

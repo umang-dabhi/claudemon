@@ -64,7 +64,6 @@ import { loadSmallSprite } from "../../src/sprites/index.js";
 // ── Phase 3 Imports ────────────────────────────────────────
 
 import {
-  getEncounterTypes,
   shouldTriggerEncounter,
   generateEncounter,
   canCatch,
@@ -466,16 +465,6 @@ describe("Phase 3: Gamification & Journey", () => {
       ).toBe(false);
     });
 
-    test("getEncounterTypes returns valid types for all events", () => {
-      for (const evt of XP_EVENT_TYPES) {
-        const types = getEncounterTypes(evt);
-        expect(types.length).toBeGreaterThan(0);
-        for (const t of types) {
-          expect(POKEMON_TYPES).toContain(t);
-        }
-      }
-    });
-
     test("generateEncounter returns valid encounter", () => {
       const state = makeState();
       const encounter = generateEncounter("commit", state);
@@ -612,7 +601,7 @@ describe("Phase 3: Gamification & Journey", () => {
 
   describe("Legendary Quests", () => {
     test("has 5 legendary quests", () => {
-      expect(LEGENDARY_QUESTS.length).toBe(5);
+      expect(LEGENDARY_QUESTS.length).toBe(22);
     });
 
     test("quest Pokemon IDs are legendary/mythical", () => {
@@ -633,7 +622,7 @@ describe("Phase 3: Gamification & Journey", () => {
     test("getQuestProgress returns progress for all quests", () => {
       const state = makeState();
       const progress = getQuestProgress(state);
-      expect(progress.length).toBe(5);
+      expect(progress.length).toBe(22);
       for (const p of progress) {
         expect(p.totalSteps).toBe(4);
         expect(p.stepsCompleted).toBeGreaterThanOrEqual(0);

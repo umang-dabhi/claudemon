@@ -1,6 +1,7 @@
 /**
  * Pre-built encounter pools — computed once at module load.
- * Maps each PokemonType to base-stage Pokemon IDs grouped by rarity.
+ * Provides all base-stage wild-eligible Pokemon grouped by rarity,
+ * with helper lookups by type and generation for smart weighting.
  */
 
 import type { PokemonType, RarityTier } from "./types.js";
@@ -22,22 +23,64 @@ function isBaseStage(pokemonId: number): boolean {
 
 const WILD_RARITIES: ReadonlySet<RarityTier> = new Set(["common", "uncommon", "rare"]);
 
+// ── Generation ranges ─────────────────────────────────────────
+
+export const GEN_RANGES: readonly { gen: number; start: number; end: number }[] = [
+  { gen: 1, start: 1, end: 151 },
+  { gen: 2, start: 152, end: 251 },
+  { gen: 3, start: 252, end: 386 },
+  { gen: 4, start: 387, end: 493 },
+  { gen: 5, start: 494, end: 649 },
+  { gen: 6, start: 650, end: 721 },
+  { gen: 7, start: 722, end: 809 },
+  { gen: 8, start: 810, end: 905 },
+];
+
+/** Get the generation number for a Pokemon ID. */
+export function getGeneration(pokemonId: number): number {
+  for (const { gen, start, end } of GEN_RANGES) {
+    if (pokemonId >= start && pokemonId <= end) return gen;
+  }
+  return 1; // fallback
+}
+
 // ── Build pools at module load ────────────────────────────────
 
-interface RarityPool {
+export interface RarityPool {
   readonly common: readonly number[];
   readonly uncommon: readonly number[];
   readonly rare: readonly number[];
 }
 
+/** All wild-eligible base-stage Pokemon, grouped by rarity. */
+function buildAllPool(): RarityPool {
+  const common: number[] = [];
+  const uncommon: number[] = [];
+  const rare: number[] = [];
+
+  for (const pokemon of POKEDEX) {
+    if (!isBaseStage(pokemon.id)) continue;
+    if (!WILD_RARITIES.has(pokemon.rarity)) continue;
+
+    const rarity = pokemon.rarity as "common" | "uncommon" | "rare";
+    if (rarity === "common") common.push(pokemon.id);
+    else if (rarity === "uncommon") uncommon.push(pokemon.id);
+    else rare.push(pokemon.id);
+  }
+
+  return {
+    common: Object.freeze(common),
+    uncommon: Object.freeze(uncommon),
+    rare: Object.freeze(rare),
+  };
+}
+
+/** Type-indexed pools for legacy compatibility and type lookups. */
 function buildTypePools(): ReadonlyMap<PokemonType, RarityPool> {
   const pools = new Map<PokemonType, { common: number[]; uncommon: number[]; rare: number[] }>();
 
   for (const pokemon of POKEDEX) {
-    // Only base-stage Pokemon appear in wild encounters
     if (!isBaseStage(pokemon.id)) continue;
-
-    // Legendary and mythical never appear in wild encounters
     if (!WILD_RARITIES.has(pokemon.rarity)) continue;
 
     for (const pokemonType of pokemon.types) {
@@ -54,7 +97,6 @@ function buildTypePools(): ReadonlyMap<PokemonType, RarityPool> {
     }
   }
 
-  // Freeze all inner arrays for immutability
   const frozen = new Map<PokemonType, RarityPool>();
   for (const [type, pool] of pools) {
     frozen.set(type, {
@@ -69,3 +111,6 @@ function buildTypePools(): ReadonlyMap<PokemonType, RarityPool> {
 
 /** Map of PokemonType to Pokemon IDs of that type, grouped by rarity. */
 export const TYPE_POOLS: ReadonlyMap<PokemonType, RarityPool> = buildTypePools();
+
+/** All wild-eligible base-stage Pokemon, grouped by rarity (type-agnostic). */
+export const ALL_WILD_POOL: RarityPool = buildAllPool();
