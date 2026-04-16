@@ -93,6 +93,30 @@ GRAY=$'\033[38;2;120;120;130m'
 GREEN=$'\033[38;2;100;200;100m'
 B=$'\xe2\xa0\x80'
 
+# ── Animation timing ───────────────────────────────────────
+# Speech blink: show for 4s, hide for 2s (6s cycle)
+NOW_SEC=$(date +%s)
+BLINK_CYCLE=$(( NOW_SEC % 6 ))
+SPEECH_VISIBLE=true
+if [ "$BLINK_CYCLE" -ge 4 ]; then
+  SPEECH_VISIBLE=false
+fi
+
+# Encounter alert: more aggressive blink — show 3s, hide 1s
+ENCOUNTER_CYCLE=$(( NOW_SEC % 4 ))
+ENCOUNTER_VISIBLE=true
+if [ "$ENCOUNTER_CYCLE" -ge 3 ]; then
+  ENCOUNTER_VISIBLE=false
+fi
+
+# Sprite jitter: shift 0-2 spaces left/right, changes every 2s
+JITTER_SEED=$(( NOW_SEC / 2 ))
+# Simple pseudo-random from timestamp: produces 0,1,2 pattern
+JITTER_OFFSET=$(( (JITTER_SEED * 7 + 3) % 5 - 2 ))
+# Clamp to -2..+2
+[ "$JITTER_OFFSET" -lt -2 ] && JITTER_OFFSET=-2
+[ "$JITTER_OFFSET" -gt 2 ] && JITTER_OFFSET=2
+
 # ── Terminal width ──────────────────────────────────────────
 # Cross-platform: Linux uses /proc, macOS uses tty, Windows uses $COLUMNS
 COLS=0
@@ -194,13 +218,20 @@ if [ -n "$UPDATE_MSG" ]; then
   LEFT_2="${YELLOW}${UPDATE_MSG}${NC}"
 fi
 
-# Line 3: buddy speech (rotates every 10s, or shows reaction)
+# Line 3: buddy speech (rotates every 30s, blinks to catch attention)
 SPEECH=""
+IS_ENCOUNTER=false
 if [ -n "$ENCOUNTER" ]; then
-  # Wild encounter takes priority — flash to get attention
-  SPEECH="! ${ENCOUNTER} Use /buddy catch !"
+  IS_ENCOUNTER=true
+  # Wild encounter — blink on/off to grab attention, re-shows repeatedly
+  if [ "$ENCOUNTER_VISIBLE" = "true" ]; then
+    SPEECH="! ${ENCOUNTER} Use /buddy catch !"
+  fi
 elif [ -n "$REACTION" ]; then
-  SPEECH="$REACTION"
+  # Reactions blink too so they don't blend in
+  if [ "$SPEECH_VISIBLE" = "true" ]; then
+    SPEECH="$REACTION"
+  fi
 else
   # Mood-based speeches — pick from mood-specific arrays
   NOW=$(date +%s)
@@ -278,9 +309,12 @@ else
 
   MOOD_COUNT=${#MOOD_SPEECHES[@]}
   IDX=$(( (NOW / 30) % MOOD_COUNT ))
-  SPEECH="${MOOD_SPEECHES[$IDX]}"
+  # Blink mood speech on/off so changes catch attention
+  if [ "$SPEECH_VISIBLE" = "true" ]; then
+    SPEECH="${MOOD_SPEECHES[$IDX]}"
+  fi
 fi
-if [ -n "$ENCOUNTER" ]; then
+if [ "$IS_ENCOUNTER" = "true" ]; then
   # Bright yellow for encounter alerts
   SPEECH_COLOR=$'\033[1;38;2;255;220;50m'
 else
@@ -296,6 +330,12 @@ RIGHT_MARGIN=4
 RIGHT_PAD=$(( COLS - ART_W - RIGHT_MARGIN ))
 [ "$RIGHT_PAD" -lt 0 ] && RIGHT_PAD=0
 
+# Jittered padding — only for sprite lines, name line stays fixed
+JITTERED_MARGIN=$(( RIGHT_MARGIN + JITTER_OFFSET ))
+[ "$JITTERED_MARGIN" -lt 2 ] && JITTERED_MARGIN=2
+JITTER_PAD=$(( COLS - ART_W - JITTERED_MARGIN ))
+[ "$JITTER_PAD" -lt 0 ] && JITTER_PAD=0
+
 # Build left array — line 1: model+context, line 2: update notice (if any)
 LEFT_LINES=()
 LEFT_LINES+=("$LEFT_1")  # line 1: model · context
@@ -307,9 +347,9 @@ while [ ${#LEFT_LINES[@]} -lt "$TOTAL_LINES" ]; do
 done
 LEFT_COUNT=${#LEFT_LINES[@]}
 
-# ── Build full right-side spacer ─────────────────────────────
+# ── Build full right-side spacer (jittered for sprite animation) ──
 FULL_SPACER=""
-for (( s=0; s<RIGHT_PAD; s++ )); do FULL_SPACER+="$B"; done
+for (( s=0; s<JITTER_PAD; s++ )); do FULL_SPACER+="$B"; done
 
 # ── Output name line ABOVE sprite — with speech before name ──
 SPEECH_TEXT=""
@@ -325,7 +365,7 @@ NAME_SPACER=""
 for (( s=0; s<NAME_PAD; s++ )); do NAME_SPACER+="$B"; done
 echo "${NAME_SPACER}${SPEECH_TEXT}${INFO_LINE}"
 
-# ── Output sprite lines (right-aligned, left content merged) ──
+# ── Output sprite lines (right-aligned with jitter, left content merged) ──
 for (( i=0; i<SPRITE_COUNT; i++ )); do
   left="${LEFT_LINES[$i]}"
   left_visible=$(echo -e "$left" | sed 's/\x1b\[[0-9;]*m//g')
@@ -334,7 +374,7 @@ for (( i=0; i<SPRITE_COUNT; i++ )); do
   right="${SPRITE_LINES[$i]}${NC}"
 
   if [ -n "$left" ]; then
-    gap=$(( RIGHT_PAD - left_w ))
+    gap=$(( JITTER_PAD - left_w ))
     [ "$gap" -lt 1 ] && gap=1
     GAP_STR=""
     for (( g=0; g<gap; g++ )); do GAP_STR+="$B"; done
