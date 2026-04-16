@@ -109,11 +109,30 @@ if [ "$ENCOUNTER_CYCLE" -ge 3 ]; then
   ENCOUNTER_VISIBLE=false
 fi
 
-# Sprite jitter: shift 0-2 spaces LEFT only every 2 seconds
-# Right shifts clip against terminal edge, so only shift left (inward)
-JITTER_SEED=$(( NOW_SEC / 2 ))
-JITTER_OFFSET=$(( (JITTER_SEED * 7 + 3) % 3 ))
-# Result: 0, 1, or 2 extra spaces of right margin (sprite shifts left)
+# Sprite jitter: idle for 15-30s (random), then quick wiggle, then idle again
+# Walk through variable-length cycles to find which cycle we're in
+JITTER_OFFSET=0
+_jt_elapsed=0
+_jt_cycle=0
+while true; do
+  # Each cycle gets a pseudo-random length between 15-30s based on cycle number
+  _jt_len=$(( 15 + ( (_jt_cycle * 13 + 7) % 16 ) ))
+  if [ $(( _jt_elapsed + _jt_len )) -gt $(( NOW_SEC % 3600 )) ]; then
+    # We're in this cycle — find position within it
+    _jt_pos=$(( (NOW_SEC % 3600) - _jt_elapsed ))
+    # Wiggle in the last 3 seconds: left, back, left
+    if [ "$_jt_pos" -eq $(( _jt_len - 3 )) ]; then
+      JITTER_OFFSET=1
+    elif [ "$_jt_pos" -eq $(( _jt_len - 2 )) ]; then
+      JITTER_OFFSET=0
+    elif [ "$_jt_pos" -eq $(( _jt_len - 1 )) ]; then
+      JITTER_OFFSET=2
+    fi
+    break
+  fi
+  _jt_elapsed=$(( _jt_elapsed + _jt_len ))
+  _jt_cycle=$(( _jt_cycle + 1 ))
+done
 
 
 # ── Terminal width ──────────────────────────────────────────
